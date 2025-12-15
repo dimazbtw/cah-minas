@@ -1,0 +1,75 @@
+# ========================================
+#       cah-Minas - Configuração de Skins
+# ========================================
+# Sistema de skins de picareta por ativação via item
+#
+# Cada skin tem:
+#   material: Material da picareta (WOODEN_PICKAXE, STONE_PICKAXE, etc)
+#   order: Ordem da skin (usada para identificar no item e BD)
+#   display: Nome exibido da skin (suporta cores &)
+#   bonus: Multiplicador de ganhos (1.0 = 0%, 1.5 = +50%, 2.0 = +100%)
+#
+# Comando para dar item de skin:
+#   /minaadmin giveskin <jogador> <ordem> [quantidade]
+#
+# Exemplo: /minaadmin giveskin Steve 3 1
+#   Dá 1 item de ativação da skin com ordem 3 ao jogador Steve
+
+skins:
+  wooden:
+    material: WOODEN_PICKAXE
+    order: 0
+    display: "&6Picareta de Madeira"
+    bonus: 1.0
+
+  stone:
+    material: STONE_PICKAXE
+    order: 1
+    display: "&7Picareta de Pedra"
+    bonus: 1.5
+
+  iron:
+    material: IRON_PICKAXE
+    order: 2
+    display: "&fPicareta de Ferro"
+    bonus: 2.0
+
+  golden:
+    material: GOLDEN_PICKAXE
+    order: 3
+    display: "&ePicareta de Ouro"
+    bonus: 3.0
+
+  diamond:
+    material: DIAMOND_PICKAXE
+    order: 4
+    display: "&bPicareta de Diamante"
+    bonus: 4.0
+
+  netherite:
+    material: NETHERITE_PICKAXE
+    order: 5
+    display: "&4Picareta de Netherite"
+    bonus: 5.0
+
+  # ========================================
+  # Skins Especiais (exemplos)
+  # ========================================
+
+  emerald:
+    material: DIAMOND_PICKAXE
+    order: 10
+    display: "&a✦ Picareta Esmeralda ✦"
+    bonus: 6.0
+
+  ruby:
+    material: NETHERITE_PICKAXE
+    order: 11
+    display: "&c✦ Picareta Rubi ✦"
+    bonus: 7.0
+
+  mythic:
+    material: NETHERITE_PICKAXE
+    order: 20
+    display: "&d&l✦ Picareta Mítica ✦"
+    bonus: 10.0

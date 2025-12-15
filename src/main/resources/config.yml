@@ -1,0 +1,111 @@
+# ========================================
+#       cah-Minas - Configuração
+# ========================================
+
+# Configurações gerais
+settings:
+  auto-save-interval: 5
+  debug: false
+
+# Comandos permitidos enquanto na mina
+command-whitelist:
+  - "sair"
+  - "mina"
+  - "minas"
+  - "msg"
+  - "r"
+  - "tell"
+  - "whisper"
+
+# Configurações padrão para novas minas
+default-mine:
+  reset-time: 300
+  reset-percentage: 50.0
+  pvp: false
+
+# Configurações do banco de dados
+database:
+  type: sqlite  # sqlite ou mysql
+  mysql:
+    host: localhost
+    port: 3306
+    database: minas
+    username: root
+    password: ''
+
+bonus:
+  # VIPs
+  minas.bonus.vip: 5
+  minas.bonus.vip_plus: 10
+  minas.bonus.mvp: 15
+  minas.bonus.mvp_plus: 20
+
+  # Ranks especiais
+  minas.bonus.deus: 25
+  minas.bonus.titan: 30
+
+  # Outros
+  minas.bonus.youtuber: 15
+  minas.bonus.streamer: 15
+
+pickaxe-bossbar:
+  # Ativar/desativar a bossbar
+  enabled: true
+  update-interval: 10
+  hide-delay: 3
+  # Placeholders: {level}, {exp}, {exp_max}, {percentage}
+  format: '§6⛏ Picareta §7| §fNível {level} §8- §b{exp}§7/§b{exp_max} XP §8({percentage}%)'
+  color: 'YELLOW'
+  # Opções: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
+  style: 'SOLID'
+  dynamic-color: true
+
+# Scoreboard na mina
+scoreboard:
+  # Ativar scoreboard
+  enabled: true
+
+  # Intervalo de atualização em ticks (20 ticks = 1 segundo)
+  update-interval: 10
+
+  # Título da scoreboard
+  title: '&6&l⛏ MINAS'
+
+  # Linhas da scoreboard
+  # Placeholders disponíveis:
+  # {mine_name} - Nome da mina
+  # {mine_id} - ID da mina
+  # {level} - Nível da picareta
+  # {exp} - EXP atual
+  # {exp_next} - EXP para próximo nível
+  # {progress_bar} - Barra de progresso visual
+  # {progress_percent} - Progresso em porcentagem
+  # {blocks_mined} - Total de blocos minerados
+  # {session_blocks} - Blocos na sessão atual
+  # {session_time} - Tempo na sessão
+  # {fortune_multiplier} - Multiplicador de fortuna
+  # {explosion_chance} - Chance de explosão
+  # {destroyer_chance} - Chance de destruidor
+  # {efficiency} - Nível de eficiência
+  # {fortune} - Nível de fortuna
+  # {explosion} - Nível de explosão
+  # {multiplier} - Nível de multiplicador
+  # {experienced} - Nível de experiente
+  # {destroyer} - Nível de destruidor
+  # {mine_blocks_current} - Blocos restantes na mina
+  # {mine_blocks_total} - Total de blocos da mina
+  # {mine_percentage} - Porcentagem restante
+  # {mine_reset_time} - Tempo até reset
+  # + Todos os placeholders do PlaceholderAPI
+  lines:
+    - ''
+    - '&f Mina: &e{mine_name}'
+    - ''
+    - '&f Nível {level}'
+    - '&f {progress_bar} &7{progress_percent}'
+    - ''
+    - '&f XP: &e{xp}'
+    - '&f Saldo: &a%coins_formatted%'
+    - '&f Cash: &6{%cash_formatted%'
+    - ''
+    - '&7craftandhelps.com'

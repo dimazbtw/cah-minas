@@ -1,0 +1,518 @@
+# ========================================
+#       cah-Minas - Encantamentos
+# ========================================
+
+menu:
+  title: '&8⛏ Melhorar Picareta'
+  size: 54
+
+  filler:
+    enabled: true
+    material: GRAY_STAINED_GLASS_PANE
+    name: ' '
+
+  pickaxe-info:
+    slot: 4
+    material: DIAMOND_PICKAXE
+    name: '&6&l⛏ Picareta de Mina'
+    lore:
+      - ''
+      - '&7Nível: &6{level}'
+      - '&7EXP: &a{exp}&7/&a{exp_next}'
+      - '&7Blocos minerados: &f{blocks_mined}'
+      - ''
+      - '&7Fortuna: &e{fortune_multiplier}x'
+      - '&7Explosão: &c{explosion_chance}'
+      - '&7Multiplicador: &d+{multiplier_bonus}'
+      - '&7Experiente: &b+{experienced_bonus}'
+      - '&7Destruidor: &5{destroyer_chance}'
+
+  player-xp:
+    slot: 49
+    material: EXPERIENCE_BOTTLE
+    name: '&a&lSeu XP'
+    lore:
+      - ''
+      - '&7Níveis: &a{player_levels}'
+      - '&7XP Total: &a{player_xp}'
+      - ''
+      - '&7Use seu XP para melhorar'
+      - '&7os encantamentos da picareta!'
+
+enchants:
+
+  # ===== EFICIÊNCIA =====
+  efficiency:
+    name: 'Eficiência'
+    description: 'Aumenta a velocidade de mineração'
+    slot: 19
+
+    level:
+      default: 0
+      max: 100
+      required: 0
+
+    effect:
+      type: 'dig_speed'
+      value-per-level: 1.0
+
+    prices-default:
+      price1:
+        provider: 'exp'
+        price: 50.0
+
+    prices-per-level:
+      price1:
+        provider: 'exp'
+        price: 10.0
+
+    displays:
+      can:
+        material: GOLDEN_PICKAXE
+        name: '&e&l⚡ Eficiência &7[{actual} → {next}]'
+        lore:
+          - ''
+          - '&7Aumenta a velocidade de mineração.'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &a{cost}'
+          - ''
+          - '&aClique esquerdo &f- Evoluir 1x'
+          - '&aClique direito &f- Escolher quantia'
+          - '&aPressione Q &f- Evoluir máximo'
+
+      cant:
+        material: WOODEN_PICKAXE
+        name: '&e&l⚡ Eficiência &c[Sem recursos]'
+        lore:
+          - ''
+          - '&7Aumenta a velocidade de mineração.'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &c{cost}'
+          - ''
+          - '&cRecursos insuficientes!'
+
+      maxed:
+        material: DIAMOND_PICKAXE
+        name: '&e&l⚡ Eficiência &6[MÁXIMO]'
+        lore:
+          - ''
+          - '&7Aumenta a velocidade de mineração.'
+          - ''
+          - '&f❯ Nível: &6{actual}&f/&6{maximum}'
+          - ''
+          - '&6✓ Nível máximo atingido!'
+
+      locked:
+        material: BARRIER
+        name: '&c&l🔒 Eficiência [BLOQUEADO]'
+        lore:
+          - ''
+          - '&7Aumenta a velocidade de mineração.'
+          - ''
+          - '&cRequer nível de picareta: &f{required_level}'
+          - '&cSeu nível: &f{pickaxe_level}'
+
+  # ===== FORTUNA =====
+  fortune:
+    name: 'Fortuna'
+    description: 'Multiplica as recompensas'
+    slot: 20
+
+    level:
+      default: 0
+      max: 100
+      required: 5
+
+    effect:
+      type: 'reward_multiplier'
+      value-per-level: 0.05
+
+    prices-default:
+      price1:
+        provider: 'exp'
+        price: 75.0
+
+    prices-per-level:
+      price1:
+        provider: 'exp'
+        price: 15.0
+
+    displays:
+      can:
+        material: DIAMOND
+        name: '&b&l💎 Fortuna &7[{actual} → {next}]'
+        lore:
+          - ''
+          - '&7Multiplica as recompensas ao minerar.'
+          - '&7Multiplicador atual: &e{multiplier}x'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &a{cost}'
+          - ''
+          - '&aClique esquerdo &f- Evoluir 1x'
+          - '&aClique direito &f- Escolher quantia'
+          - '&aPressione Q &f- Evoluir máximo'
+
+      cant:
+        material: COAL
+        name: '&b&l💎 Fortuna &c[Sem recursos]'
+        lore:
+          - ''
+          - '&7Multiplica as recompensas ao minerar.'
+          - '&7Multiplicador atual: &e{multiplier}x'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &c{cost}'
+          - ''
+          - '&cRecursos insuficientes!'
+
+      maxed:
+        material: DIAMOND_BLOCK
+        name: '&b&l💎 Fortuna &6[MÁXIMO]'
+        lore:
+          - ''
+          - '&7Multiplica as recompensas ao minerar.'
+          - '&7Multiplicador: &e{multiplier}x'
+          - ''
+          - '&f❯ Nível: &6{actual}&f/&6{maximum}'
+          - ''
+          - '&6✓ Nível máximo atingido!'
+
+      locked:
+        material: BARRIER
+        name: '&c&l🔒 Fortuna [BLOQUEADO]'
+        lore:
+          - ''
+          - '&7Multiplica as recompensas ao minerar.'
+          - ''
+          - '&cRequer nível de picareta: &f{required_level}'
+          - '&cSeu nível: &f{pickaxe_level}'
+
+  # ===== EXPLOSÃO =====
+  explosion:
+    name: 'Explosão'
+    description: 'Chance de explodir área 7x7'
+    slot: 21
+
+    level:
+      default: 0
+      max: 1000
+      required: 10
+
+    effect:
+      type: 'explosion_chance'
+      value-per-level: 0.1
+
+    prices-default:
+      price1:
+        provider: 'exp'
+        price: 200.0
+
+    prices-per-level:
+      price1:
+        provider: 'exp'
+        price: 50.0
+
+    displays:
+      can:
+        material: TNT
+        name: '&c&l💥 Explosão &7[{actual} → {next}]'
+        lore:
+          - ''
+          - '&7Chance de explodir uma área 7x7.'
+          - '&7Chance atual: &e{chance}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &a{cost}'
+          - ''
+          - '&aClique esquerdo &f- Evoluir 1x'
+          - '&aClique direito &f- Escolher quantia'
+          - '&aPressione Q &f- Evoluir máximo'
+
+      cant:
+        material: GUNPOWDER
+        name: '&c&l💥 Explosão &c[Sem recursos]'
+        lore:
+          - ''
+          - '&7Chance de explodir uma área 7x7.'
+          - '&7Chance atual: &e{chance}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &c{cost}'
+          - ''
+          - '&cRecursos insuficientes!'
+
+      maxed:
+        material: TNT
+        name: '&c&l💥 Explosão &6[MÁXIMO]'
+        lore:
+          - ''
+          - '&7Chance de explodir uma área 7x7.'
+          - '&7Chance: &e{chance}'
+          - ''
+          - '&f❯ Nível: &6{actual}&f/&6{maximum}'
+          - ''
+          - '&6✓ Nível máximo atingido!'
+
+      locked:
+        material: BARRIER
+        name: '&c&l🔒 Explosão [BLOQUEADO]'
+        lore:
+          - ''
+          - '&7Chance de explodir uma área 7x7.'
+          - ''
+          - '&cRequer nível de picareta: &f{required_level}'
+          - '&cSeu nível: &f{pickaxe_level}'
+
+  # ===== MULTIPLICADOR =====
+  multiplier:
+    name: 'Multiplicador'
+    description: 'Multiplica XP do bloco para evoluir encantamentos'
+    slot: 23
+
+    level:
+      default: 0
+      max: 1000
+      required: 15
+
+    effect:
+      type: 'enchant_xp_multiplier'
+      value-per-level: 0.01
+
+    prices-default:
+      price1:
+        provider: 'exp'
+        price: 100.0
+
+    prices-per-level:
+      price1:
+        provider: 'exp'
+        price: 20.0
+
+    displays:
+      can:
+        material: NETHER_STAR
+        name: '&d&l✨ Multiplicador &7[{actual} → {next}]'
+        lore:
+          - ''
+          - '&7Multiplica o XP do bloco para'
+          - '&7evoluir encantamentos.'
+          - '&7Bónus atual: &e+{bonus}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &a{cost}'
+          - ''
+          - '&aClique esquerdo &f- Evoluir 1x'
+          - '&aClique direito &f- Escolher quantia'
+          - '&aPressione Q &f- Evoluir máximo'
+
+      cant:
+        material: GLOWSTONE_DUST
+        name: '&d&l✨ Multiplicador &c[Sem recursos]'
+        lore:
+          - ''
+          - '&7Multiplica o XP do bloco para'
+          - '&7evoluir encantamentos.'
+          - '&7Bónus atual: &e+{bonus}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &c{cost}'
+          - ''
+          - '&cRecursos insuficientes!'
+
+      maxed:
+        material: NETHER_STAR
+        name: '&d&l✨ Multiplicador &6[MÁXIMO]'
+        lore:
+          - ''
+          - '&7Multiplica o XP do bloco para'
+          - '&7evoluir encantamentos.'
+          - '&7Bónus: &e+{bonus}'
+          - ''
+          - '&f❯ Nível: &6{actual}&f/&6{maximum}'
+          - ''
+          - '&6✓ Nível máximo atingido!'
+
+      locked:
+        material: BARRIER
+        name: '&c&l🔒 Multiplicador [BLOQUEADO]'
+        lore:
+          - ''
+          - '&7Multiplica o XP do bloco.'
+          - ''
+          - '&cRequer nível de picareta: &f{required_level}'
+          - '&cSeu nível: &f{pickaxe_level}'
+
+  # ===== EXPERIENTE =====
+  experienced:
+    name: 'Experiente'
+    description: 'Recebe mais EXP para o nível da picareta'
+    slot: 24
+
+    level:
+      default: 0
+      max: 1000
+      required: 20
+
+    effect:
+      type: 'pickaxe_exp_bonus'
+      value-per-level: 0.02
+
+    prices-default:
+      price1:
+        provider: 'exp'
+        price: 150.0
+
+    prices-per-level:
+      price1:
+        provider: 'exp'
+        price: 30.0
+
+    displays:
+      can:
+        material: EXPERIENCE_BOTTLE
+        name: '&a&l📚 Experiente &7[{actual} → {next}]'
+        lore:
+          - ''
+          - '&7Recebe mais EXP para o'
+          - '&7nível da picareta.'
+          - '&7Bónus atual: &e+{bonus}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &a{cost}'
+          - ''
+          - '&aClique esquerdo &f- Evoluir 1x'
+          - '&aClique direito &f- Escolher quantia'
+          - '&aPressione Q &f- Evoluir máximo'
+
+      cant:
+        material: GLASS_BOTTLE
+        name: '&a&l📚 Experiente &c[Sem recursos]'
+        lore:
+          - ''
+          - '&7Recebe mais EXP para o'
+          - '&7nível da picareta.'
+          - '&7Bónus atual: &e+{bonus}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &c{cost}'
+          - ''
+          - '&cRecursos insuficientes!'
+
+      maxed:
+        material: EXPERIENCE_BOTTLE
+        name: '&a&l📚 Experiente &6[MÁXIMO]'
+        lore:
+          - ''
+          - '&7Recebe mais EXP para o'
+          - '&7nível da picareta.'
+          - '&7Bónus: &e+{bonus}'
+          - ''
+          - '&f❯ Nível: &6{actual}&f/&6{maximum}'
+          - ''
+          - '&6✓ Nível máximo atingido!'
+
+      locked:
+        material: BARRIER
+        name: '&c&l🔒 Experiente [BLOQUEADO]'
+        lore:
+          - ''
+          - '&7Recebe mais EXP para a picareta.'
+          - ''
+          - '&cRequer nível de picareta: &f{required_level}'
+          - '&cSeu nível: &f{pickaxe_level}'
+
+  # ===== DESTRUIDOR =====
+  destroyer:
+    name: 'Destruidor'
+    description: 'Chance de quebrar uma camada inteira'
+    slot: 25
+
+    level:
+      default: 0
+      max: 100
+      required: 30
+
+    effect:
+      type: 'layer_destroy_chance'
+      value-per-level: 0.1
+
+    prices-default:
+      price1:
+        provider: 'exp'
+        price: 500.0
+
+    prices-per-level:
+      price1:
+        provider: 'exp'
+        price: 100.0
+      price2:
+        provider: 'coins'
+        price: 50000.0
+
+    displays:
+      can:
+        material: NETHERITE_PICKAXE
+        name: '&5&l🔨 Destruidor &7[{actual} → {next}]'
+        lore:
+          - ''
+          - '&7Chance de quebrar uma camada'
+          - '&7inteira da mina!'
+          - '&7Chance atual: &e{chance}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &a{cost}'
+          - ''
+          - '&aClique esquerdo &f- Evoluir 1x'
+          - '&aClique direito &f- Escolher quantia'
+          - '&aPressione Q &f- Evoluir máximo'
+
+      cant:
+        material: IRON_PICKAXE
+        name: '&5&l🔨 Destruidor &c[Sem recursos]'
+        lore:
+          - ''
+          - '&7Chance de quebrar uma camada'
+          - '&7inteira da mina!'
+          - '&7Chance atual: &e{chance}'
+          - ''
+          - '&f❯ Nível: &b{actual}&f/&b{maximum}'
+          - '&f❯ Custo: &c{cost}'
+          - ''
+          - '&cRecursos insuficientes!'
+
+      maxed:
+        material: NETHERITE_PICKAXE
+        name: '&5&l🔨 Destruidor &6[MÁXIMO]'
+        lore:
+          - ''
+          - '&7Chance de quebrar uma camada'
+          - '&7inteira da mina!'
+          - '&7Chance: &e{chance}'
+          - ''
+          - '&f❯ Nível: &6{actual}&f/&6{maximum}'
+          - ''
+          - '&6✓ Nível máximo atingido!'
+
+      locked:
+        material: BARRIER
+        name: '&c&l🔒 Destruidor [BLOQUEADO]'
+        lore:
+          - ''
+          - '&7Chance de quebrar uma camada.'
+          - ''
+          - '&cRequer nível de picareta: &f{required_level}'
+          - '&cSeu nível: &f{pickaxe_level}'
+
+# Mensagens
+messages:
+  upgrade-success: '&a{enchant} melhorado para nível &f{level}&a!'
+  upgrade-max: '&cEste encantamento já está no nível máximo!'
+  upgrade-no-resources: '&cRecursos insuficientes!'
+  upgrade-multiple: '&a{enchant} melhorado &f{amount}x &a(nível {level})!'
+  upgrade-locked: '&cEncantamento bloqueado! Requer nível de picareta &f{level}&c.'
+  select-amount-message: '&eDigite a quantidade de níveis para evoluir (ou "cancelar"):'
+  select-amount-invalid: '&cQuantidade inválida!'
+  select-amount-cancelled: '&cUpgrade cancelado.'

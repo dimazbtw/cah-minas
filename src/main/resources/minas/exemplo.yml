@@ -1,0 +1,96 @@
+# ========================================
+#   Exemplo de Configuração de Mina
+# ========================================
+
+# Nome de exibição da mina (suporta cores)
+display: "&7Mina Padrão"
+
+# Localizações
+locs:
+  # Spawn da mina (onde jogadores teleportam)
+  spawn:
+    world: world
+    x: 0.0
+    y: 64.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+  
+  # Saída da mina (opcional)
+  exit:
+    world: world
+    x: 0.0
+    y: 64.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+  
+  # Posição 1 da região
+  pos1:
+    world: world
+    x: 0.0
+    y: 50.0
+    z: 0.0
+  
+  # Posição 2 da região
+  pos2:
+    world: world
+    x: 20.0
+    y: 60.0
+    z: 20.0
+
+# Opções da mina
+options:
+  # Tempo de reset em segundos
+  reset-time: 300
+  
+  # Porcentagem mínima para resetar automaticamente
+  percentage: 50.0
+  
+  # Permissão necessária para minerar
+  permission: "mina.padrao"
+  
+  # PvP dentro da mina
+  pvp: false
+
+# Configuração dos blocos
+blocks:
+  # Material do bloco
+  STONE:
+    # Chance de aparecer (soma de todas deve ser ~100%)
+    chance: 70.0
+    # XP dado ao quebrar
+    xp: 1.0
+    # Preços
+    prices:
+      money: 10.0
+      tokens: 1.0
+    # Rewards especiais (comando:comando2, chance%)
+    rewards: []
+  
+  COAL_ORE:
+    chance: 20.0
+    xp: 5.0
+    prices:
+      money: 50.0
+      tokens: 5.0
+    rewards:
+      - "give {player} coal 1, 50.0"
+  
+  IRON_ORE:
+    chance: 8.0
+    xp: 10.0
+    prices:
+      money: 100.0
+      tokens: 10.0
+    rewards:
+      - "give {player} raw_iron 1, 30.0"
+  
+  DIAMOND_ORE:
+    chance: 2.0
+    xp: 50.0
+    prices:
+      money: 500.0
+      tokens: 50.0
+    rewards:
+      - "give {player} diamond 1:broadcast &e{player} &fencontrou um &bdiamante&f!, 10.0"

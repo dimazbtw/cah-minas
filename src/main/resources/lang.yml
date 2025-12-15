@@ -1,0 +1,86 @@
+# ========================================
+#       cah-Minas - Mensagens
+# ========================================
+
+prefix: "&8[&6Minas&8] "
+
+# ===== GERAIS =====
+general:
+  reloaded: "&aPlugin recarregado com sucesso!"
+  no-permission: "&cVocê não tem permissão para isso."
+  player-offline: "&cJogador não encontrado ou offline."
+  invalid-number: "&cNúmero inválido."
+
+# ===== MINAS =====
+mine:
+  created: "&aMina &f{mine} &acriada com sucesso!"
+  deleted: "&cMina &f{mine} &cdeletada."
+  not-found: "&cMina não encontrada."
+  already-exists: "&cJá existe uma mina com esse ID."
+  invalid-id: "&cID inválido! Use apenas letras, números, - e _"
+  create-error: "&cErro ao criar a mina."
+  delete-error: "&cErro ao deletar a mina."
+  not-configured: "&cEsta mina não está configurada. Defina a região primeiro."
+  spawn-set: "&aSpawn da mina &f{mine} &adefinido!"
+  exit-set: "&aSaída da mina &f{mine} &adefinida!"
+  no-spawn: "&cEsta mina não tem spawn definido."
+  no-permission: "&cVocê não tem permissão para minerar aqui."
+  no-permission-any: "&cVocê não tem permissão para acessar nenhuma mina."
+  need-pickaxe: "&cPrecisas de usar a picareta de mina para minerar aqui!"
+  teleported: "&aTeleportado para &f{mine}&a!"
+  exited: "&eSaiu da mina &f{mine}&e."
+  reset-success: "&aMina &f{mine} &aresetada com sucesso!"
+  reset-broadcast: "&e&lMINA &8» &fA mina {mine} &ffoi resetada!"
+  reset-teleport: "&eVocê foi teleportado para fora da mina por causa do reset."
+  pvp-disabled: "&cPvP está desativado nesta mina."
+  list-empty: "&cNenhuma mina cadastrada."
+  list-header: "&6&lMinas disponíveis:"
+  list-entry: " &8• {status} &f{mine} &8- &7{display}"
+
+# ===== SELEÇÃO =====
+selection:
+  started: "&aIniciando seleção para a mina &f{mine}&a!"
+  cancelled: "&cSeleção cancelada."
+  not-selecting: "&cVocê não está em modo de seleção."
+  incomplete: "&cSelecione as duas posições primeiro!"
+  confirmed: "&aSeleção confirmada! Mina &f{mine} &aconfigurada com &f{blocks} blocos&a."
+  pos1-set: "&aPosição 1 definida: &f{x}, {y}, {z}"
+  pos2-set: "&aPosição 2 definida: &f{x}, {y}, {z}"
+  same-position: "&cAs duas posições não podem ser iguais."
+  different-world: "&cAs duas posições devem estar no mesmo mundo."
+  complete: "&eSeleção completa! &f{blocks} blocos&e. Use &f/minaadmin confirmar &epara aplicar."
+
+# ===== BLOCOS =====
+blocks:
+  hold-item: "&cSegure um bloco na mão para adicionar."
+  not-block: "&cIsso não é um bloco válido."
+  already-exists: "&cEste bloco já está configurado nesta mina."
+  added: "&aBloco &f{block} &aadicionado!"
+  removed: "&cBloco &f{block} &cremovido."
+
+# ===== PICARETA =====
+pickaxe:
+  received: "&aRecebeste a tua &6Picareta de Mina&a!"
+
+# ===== RANKING =====
+ranking:
+  loading: "&eA carregar ranking..."
+  empty: "&cAinda não há jogadores no ranking."
+  header: "&6&l━━━━ Ranking - {type} ━━━━"
+  entry: "&7{position}. &f{player} &8- &e{value}"
+  footer: "&6&l━━━━━━━━━━━━━━━━━━━━━━━"
+  your-position: "&7A tua posição: &e#{position}"
+
+# ===== XP =====
+xp:
+  added: "&aAdicionado &f{amount} XP &aa &f{player}&a."
+  removed: "&cRemovido &f{amount} XP &cde &f{player}&c."
+  set: "&aDefinido o XP de &f{player} &apara &f{amount}&a."
+  received: "&aRecebeste &f{amount} XP&a!"
+  lost: "&cForam removidos &f{amount} XP&c!"
+  invalid-amount: "&cA quantidade deve ser maior que 0."
+
+# ===== SESSÃO =====
+session:
+  exited: "&eVoltas-te ao spawn principal."
+  command-blocked: "&cNão podes usar este comando enquanto estás na mina. Usa &f/sair &cpara sair."

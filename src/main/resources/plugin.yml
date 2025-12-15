@@ -1,0 +1,7 @@
+name: cah-minas
+version: '${project.version}'
+main: github.dimazbtw.minas.Main
+api-version: 1.16
+softdepend: [ Economy, WorldEdit, FastAsyncWorldEdit ]
+load: POSTWORLD
+authors: [ dimaz ]
