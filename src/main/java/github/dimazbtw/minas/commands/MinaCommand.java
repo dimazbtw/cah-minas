@@ -39,6 +39,11 @@ public class MinaCommand {
             return;
         }
 
+        if (plugin.getSessionManager().hasSession(player)) {
+            plugin.getLanguageManager().sendMessage(player, "mine.already-in-mine");
+            return;
+        }
+
         player.teleport(bestMine.getSpawn());
         plugin.getSessionManager().createSession(player, bestMine);
         plugin.getLanguageManager().sendMessage(player, "mine.teleported",
@@ -57,8 +62,8 @@ public class MinaCommand {
     }
 
     @Command(
-            name = "sair",
-            aliases = "spawn",
+            name = "spawn",
+            aliases = "sair",
             description = "Sair da sessão de mina",
             target = CommandTarget.PLAYER
     )

@@ -1,150 +1,106 @@
 package github.dimazbtw.minas.menus;
 
+import github.dimazbtw.lib.inventories.PaginatedGUI;
+import github.dimazbtw.lib.inventories.PaginatedGUIBuilder;
+import github.dimazbtw.lib.inventories.ItemButton;
 import github.dimazbtw.minas.Main;
 import github.dimazbtw.minas.data.Mine;
 import github.dimazbtw.minas.utils.MapBuilder;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-public class PlayerMinesMenu implements InventoryHolder {
+public class PlayerMinesMenu {
 
     private final Main plugin;
     private final Player player;
-    private final Inventory inventory;
-    private final int page;
     private final List<Mine> availableMines;
 
-    private static final int ITEMS_PER_PAGE = 36;
-
     public PlayerMinesMenu(Main plugin, Player player) {
-        this(plugin, player, 0);
-    }
-
-    public PlayerMinesMenu(Main plugin, Player player, int page) {
         this.plugin = plugin;
         this.player = player;
-        this.page = page;
         this.availableMines = plugin.getMineManager().getMinesForPlayer(player);
-        this.inventory = org.bukkit.Bukkit.createInventory(this, 54,
-                ChatColor.translateAlternateColorCodes('&', "&8Lista de Minas"));
-        setup();
-    }
-
-    private void setup() {
-        ItemStack glass = createItem(Material.GRAY_STAINED_GLASS_PANE, " ");
-        for (int i = 45; i < 54; i++) {
-            inventory.setItem(i, glass);
-        }
-
-        int startIndex = page * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, availableMines.size());
-
-        int slot = 0;
-        for (int i = startIndex; i < endIndex && slot < ITEMS_PER_PAGE; i++) {
-            Mine mine = availableMines.get(i);
-            inventory.setItem(slot, createMineItem(mine, i == 0));
-            slot++;
-        }
-
-        int totalPages = (int) Math.ceil((double) availableMines.size() / ITEMS_PER_PAGE);
-
-        if (page > 0) {
-            inventory.setItem(45, createItem(Material.ARROW, "&ePágina Anterior"));
-        }
-
-        if (page < totalPages - 1) {
-            inventory.setItem(53, createItem(Material.ARROW, "&ePróxima Página"));
-        }
-
-        inventory.setItem(49, createItem(Material.BARRIER, "&c&lVoltar",
-                "",
-                "&eClique para voltar ao menu principal"));
-
-        inventory.setItem(47, createItem(Material.BOOK, "&6&lSuas Minas",
-                "", "&7Minas disponíveis: &f" + availableMines.size(),
-                "&7Página: &f" + (page + 1) + "/" + Math.max(1, totalPages),
-                "", "&eClique em uma mina para teleportar!"));
-    }
-
-    private ItemStack createMineItem(Mine mine, boolean isBest) {
-        Material material = isBest ? Material.DIAMOND_PICKAXE : Material.IRON_PICKAXE;
-
-        List<String> lore = new ArrayList<>();
-        lore.add("");
-
-        if (isBest) {
-            lore.add("&a&l★ Sua melhor mina!");
-            lore.add("");
-        }
-
-        lore.add("&7Ordem: &f" + mine.getOrder());
-
-        if (mine.isConfigured()) {
-            lore.add("&7Blocos: &f" + mine.getCurrentBlocks() + "/" + mine.getTotalBlocks());
-            lore.add("&7Porcentagem: &f" + String.format("%.1f%%", mine.getPercentageRemaining()));
-        }
-
-        lore.add("");
-        lore.add("&eClique para teleportar!");
-
-        String displayName = isBest ? "&6&l" + mine.getDisplayName() : mine.getDisplayName();
-
-        return createItem(material, displayName, lore.toArray(new String[0]));
-    }
-
-    private ItemStack createItem(Material material, String name, String... lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
-
-        if (lore.length > 0) {
-            List<String> coloredLore = new ArrayList<>();
-            for (String line : lore) {
-                coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
-            }
-            meta.setLore(coloredLore);
-        }
-
-        item.setItemMeta(meta);
-        return item;
+        // Ordenar do menor para o maior (1 a 9)
+        this.availableMines.sort(Comparator.comparingInt(Mine::getOrder));
     }
 
     public void open() {
-        player.openInventory(inventory);
+        PaginatedGUIBuilder builder = new PaginatedGUIBuilder("§8Lista de Minas - Página {page}",
+                "xxxxxxxxx" +
+                        "x#######x" +
+                        "x#######x" +
+                        "x#######x" +
+                        "<#######>");
+
+        builder.setDefaultAllCancell(true);
+
+        // Botões de navegação
+        builder.setPreviousPageItem(Material.ARROW, 1, "§ePágina Anterior");
+        builder.setNextPageItem(Material.ARROW, 1, "§ePróxima Página");
+
+        // Botão de voltar
+        ItemButton backButton = new ItemButton(Material.BARRIER, "§c§lVoltar",
+                "",
+                "§eClique para voltar ao menu principal");
+        backButton.setDefaultAction(e -> new MinasMainMenu(plugin, player).open()); // ✅ CORRIGIDO
+        builder.setHotbarButton((byte) 4, backButton);
+
+        // Conteúdo - minas
+        List<ItemButton> content = new ArrayList<>();
+        for (int i = 0; i < availableMines.size(); i++) {
+            Mine mine = availableMines.get(i);
+            boolean isBest = i == 0;
+            content.add(createMineButton(mine, isBest));
+        }
+
+        builder.setContent(content);
+
+        PaginatedGUI gui = builder.build();
+        gui.show(player);
     }
 
-    public void handleClick(int slot, ClickType clickType) {
-        if (slot == 49) {
-            new MinasMainMenu(plugin, player).open();
-            return;
+    private ItemButton createMineButton(Mine mine, boolean isBest) {
+        Material material = isBest ? Material.DIAMOND_PICKAXE : Material.IRON_PICKAXE;
+
+        List<String> lore = new ArrayList<>();
+
+        if (isBest) {
+            lore.add("");
+            lore.add("§a§l★ Sua melhor mina!");
         }
 
-        if (slot == 45 && page > 0) {
-            new PlayerMinesMenu(plugin, player, page - 1).open();
-            return;
+        lore.add("");
+        lore.add("§eClique para teleportar!");
+
+        String displayName = isBest ? "§6§l" + mine.getDisplayName() : "§f" + mine.getDisplayName() + " §7[" +String.format("%.1f%%", mine.getPercentageRemaining()) + "]";
+
+        // Criar ItemStack com flags
+        org.bukkit.inventory.ItemStack item = new org.bukkit.inventory.ItemStack(material);
+        org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+
+        if (meta != null) {
+            meta.setDisplayName(displayName);
+            meta.setLore(lore);
+
+            // Esconder todos os atributos
+            meta.addItemFlags(
+                    org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES,
+                    org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS,
+                    org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE,
+                    org.bukkit.inventory.ItemFlag.HIDE_DESTROYS,
+                    org.bukkit.inventory.ItemFlag.HIDE_PLACED_ON,
+                    org.bukkit.inventory.ItemFlag.HIDE_POTION_EFFECTS
+            );
+
+            item.setItemMeta(meta);
         }
 
-        int totalPages = (int) Math.ceil((double) availableMines.size() / ITEMS_PER_PAGE);
-        if (slot == 53 && page < totalPages - 1) {
-            new PlayerMinesMenu(plugin, player, page + 1).open();
-            return;
-        }
+        ItemButton button = new ItemButton(item);
 
-        int startIndex = page * ITEMS_PER_PAGE;
-        int mineIndex = startIndex + slot;
-
-        if (slot < ITEMS_PER_PAGE && mineIndex < availableMines.size()) {
-            Mine mine = availableMines.get(mineIndex);
-
+        button.setDefaultAction(e -> {
             if (mine.getSpawn() != null) {
                 player.closeInventory();
                 player.teleport(mine.getSpawn());
@@ -154,11 +110,8 @@ public class PlayerMinesMenu implements InventoryHolder {
             } else {
                 plugin.getLanguageManager().sendMessage(player, "mine.no-spawn");
             }
-        }
-    }
+        });
 
-    @Override
-    public Inventory getInventory() {
-        return inventory;
+        return button;
     }
 }

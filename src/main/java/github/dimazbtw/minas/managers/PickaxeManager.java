@@ -166,8 +166,6 @@ public class PickaxeManager {
         } else {
             player.getInventory().addItem(pickaxe);
         }
-
-        plugin.getLanguageManager().sendMessage(player, "pickaxe.received");
     }
 
     public void removePickaxes(Player player) {

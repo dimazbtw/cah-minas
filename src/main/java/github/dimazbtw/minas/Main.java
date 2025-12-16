@@ -84,12 +84,12 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new MineSelectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MineProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new MineBlockBreakListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new MenuListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerMoveListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SessionProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new PickaxeListener(this), this);
         Bukkit.getPluginManager().registerEvents(new InputListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SkinActivationListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new WorldLoadListener(this), this);
 
 
         // Carregar minas

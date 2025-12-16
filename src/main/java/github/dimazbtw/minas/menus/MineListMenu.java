@@ -1,5 +1,8 @@
 package github.dimazbtw.minas.menus;
 
+import github.dimazbtw.lib.inventories.PaginatedGUI;
+import github.dimazbtw.lib.inventories.PaginatedGUIBuilder;
+import github.dimazbtw.lib.inventories.ItemButton;
 import github.dimazbtw.minas.Main;
 import github.dimazbtw.minas.data.Mine;
 import github.dimazbtw.minas.utils.MapBuilder;
@@ -7,100 +10,122 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MineListMenu implements InventoryHolder {
+public class MineListMenu {
 
     private final Main plugin;
     private final Player player;
-    private final Inventory inventory;
-    private final int page;
-
-    private static final int ITEMS_PER_PAGE = 45;
 
     public MineListMenu(Main plugin, Player player) {
-        this(plugin, player, 0);
-    }
-
-    public MineListMenu(Main plugin, Player player, int page) {
         this.plugin = plugin;
         this.player = player;
-        this.page = page;
-        this.inventory = org.bukkit.Bukkit.createInventory(this, 54,
-                ChatColor.translateAlternateColorCodes('&', "&8Lista de Minas"));
-        setup();
     }
 
-    private void setup() {
+    public void open() {
         Collection<Mine> allMines = plugin.getMineManager().getAllMines();
         List<Mine> mineList = new ArrayList<>(allMines);
 
-        int startIndex = page * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, mineList.size());
+        PaginatedGUIBuilder builder = new PaginatedGUIBuilder("§8Lista de Minas - Página {page}",
+                "xxxxxxxxx" +
+                        "x#######x" +
+                        "x#######x" +
+                        "x#######x" +
+                        "<xxxxxxx>");
 
-        // Preencher com minas
-        int slot = 0;
-        for (int i = startIndex; i < endIndex && slot < ITEMS_PER_PAGE; i++) {
-            Mine mine = mineList.get(i);
-            inventory.setItem(slot, createMineItem(mine));
-            slot++;
-        }
+        builder.setDefaultAllCancell(true);
 
-        // Barra inferior
-        ItemStack glass = createItem(Material.GRAY_STAINED_GLASS_PANE, " ");
-        for (int i = 45; i < 54; i++) {
-            inventory.setItem(i, glass);
-        }
+        // Botões de navegação
+        builder.setPreviousPageItem(Material.ARROW, 1, "§ePágina Anterior");
+        builder.setNextPageItem(Material.ARROW, 1, "§ePróxima Página");
 
         // Botão de criar nova mina
-        inventory.setItem(49, createItem(Material.EMERALD, "&a&lCriar Nova Mina",
-                "&7Clique para criar uma nova mina"));
+        ItemButton createButton = new ItemButton(Material.EMERALD, "§a§lCriar Nova Mina",
+                "§7Clique para criar uma nova mina");
+        createButton.setDefaultAction(e -> {
+            player.closeInventory();
+            player.sendMessage(ChatColor.translateAlternateColorCodes('§',
+                    "§eUse: §f/mina criar <id> §epara criar uma nova mina"));
+        });
+        builder.setHotbarButton((byte) 4, createButton);
 
-        // Navegação
-        int totalPages = (int) Math.ceil((double) mineList.size() / ITEMS_PER_PAGE);
+        // Botão de info
+        ItemButton infoButton = new ItemButton(Material.BOOK, "§6§lInformações",
+                "§7Total de minas: §f" + mineList.size());
+        builder.setHotbarButton((byte) 2, infoButton);
 
-        if (page > 0) {
-            inventory.setItem(45, createItem(Material.ARROW, "&ePágina Anterior"));
+        // Conteúdo - minas
+        List<ItemButton> content = new ArrayList<>();
+        for (Mine mine : mineList) {
+            content.add(createMineButton(mine));
         }
 
-        if (page < totalPages - 1) {
-            inventory.setItem(53, createItem(Material.ARROW, "&ePróxima Página"));
-        }
+        builder.setContent(content);
 
-        // Info
-        inventory.setItem(47, createItem(Material.BOOK, "&6&lInformações",
-                "&7Total de minas: &f" + mineList.size(),
-                "&7Página: &f" + (page + 1) + "/" + Math.max(1, totalPages)));
+        PaginatedGUI gui = builder.build();
+        gui.show(player);
     }
 
-    private ItemStack createMineItem(Mine mine) {
+    private ItemButton createMineButton(Mine mine) {
         Material material = mine.isConfigured() ? Material.DIAMOND_PICKAXE : Material.WOODEN_PICKAXE;
-        String status = mine.isConfigured() ? "&a✓ Configurada" : "&c✗ Não configurada";
+        String status = mine.isConfigured() ? "§a✓ Configurada" : "§c✗ Não configurada";
 
         List<String> lore = new ArrayList<>();
         lore.add("");
-        lore.add("&7ID: &f" + mine.getId());
-        lore.add("&7Status: " + status);
+        lore.add("§7ID: §f" + mine.getId());
+        lore.add("§7Status: " + status);
 
         if (mine.isConfigured()) {
-            lore.add("&7Blocos: &f" + mine.getCurrentBlocks() + "/" + mine.getTotalBlocks());
-            lore.add("&7Porcentagem: &f" + String.format("%.1f%%", mine.getPercentageRemaining()));
-            lore.add("&7Reset em: &f" + formatTime(mine.getTimeUntilReset()));
+            lore.add("§7Blocos: §f" + mine.getCurrentBlocks() + "/" + mine.getTotalBlocks());
+            lore.add("§7Porcentagem: §f" + String.format("%.1f%%", mine.getPercentageRemaining()));
+            lore.add("§7Reset em: §f" + formatTime(mine.getTimeUntilReset()));
         }
 
         lore.add("");
-        lore.add("&e⬥ Clique Esquerdo &8- &fEditar");
-        lore.add("&e⬥ Clique Direito &8- &fTeleportar");
-        lore.add("&e⬥ Shift + Clique &8- &fResetar");
+        lore.add("§e⬥ Clique Esquerdo §8- §fEditar");
+        lore.add("§e⬥ Clique Direito §8- §fTeleportar");
+        lore.add("§e⬥ Shift + Clique §8- §fResetar");
 
-        return createItem(material, mine.getDisplayName(), lore.toArray(new String[0]));
+        ItemButton button = new ItemButton(material, mine.getDisplayName(), lore.toArray(new String[0]));
+
+        // Editar mina
+        button.addAction(ClickType.LEFT, e -> new MineEditMenu(plugin, player, mine).open()); // ✅ CORRIGIDO
+
+        // Teleportar
+        button.addAction(ClickType.RIGHT, e -> {
+            if (mine.getSpawn() != null) {
+                player.closeInventory();
+                player.teleport(mine.getSpawn());
+                plugin.getLanguageManager().sendMessage(player, "mine.teleported",
+                        MapBuilder.of("mine", mine.getDisplayName()));
+            } else {
+                plugin.getLanguageManager().sendMessage(player, "mine.no-spawn");
+            }
+        });
+
+        // Resetar mina
+        button.addAction(ClickType.SHIFT_LEFT, e -> {
+            if (mine.isConfigured()) {
+                mine.reset();
+                plugin.getLanguageManager().sendMessage(player, "mine.reset-success",
+                        MapBuilder.of("mine", mine.getDisplayName()));
+                open(); // Reabrir menu
+            }
+        });
+
+        button.addAction(ClickType.SHIFT_RIGHT, e -> {
+            if (mine.isConfigured()) {
+                mine.reset();
+                plugin.getLanguageManager().sendMessage(player, "mine.reset-success",
+                        MapBuilder.of("mine", mine.getDisplayName()));
+                open(); // Reabrir menu
+            }
+        });
+
+        return button;
     }
 
     private String formatTime(long seconds) {
@@ -117,87 +142,5 @@ public class MineListMenu implements InventoryHolder {
         } else {
             return String.format("%ds", secs);
         }
-    }
-
-    private ItemStack createItem(Material material, String name, String... lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
-
-        if (lore.length > 0) {
-            List<String> coloredLore = new ArrayList<>();
-            for (String line : lore) {
-                coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
-            }
-            meta.setLore(coloredLore);
-        }
-
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    public void open() {
-        player.openInventory(inventory);
-    }
-
-    public void handleClick(int slot, ClickType clickType) {
-        Collection<Mine> allMines = plugin.getMineManager().getAllMines();
-        List<Mine> mineList = new ArrayList<>(allMines);
-
-        int startIndex = page * ITEMS_PER_PAGE;
-        int mineIndex = startIndex + slot;
-
-        // Criar nova mina
-        if (slot == 49) {
-            player.closeInventory();
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    "&eUse: &f/mina criar <id> &epara criar uma nova mina"));
-            return;
-        }
-
-        // Navegação
-        if (slot == 45 && page > 0) {
-            new MineListMenu(plugin, player, page - 1).open();
-            return;
-        }
-
-        int totalPages = (int) Math.ceil((double) mineList.size() / ITEMS_PER_PAGE);
-        if (slot == 53 && page < totalPages - 1) {
-            new MineListMenu(plugin, player, page + 1).open();
-            return;
-        }
-
-        // Clique em mina
-        if (slot < ITEMS_PER_PAGE && mineIndex < mineList.size()) {
-            Mine mine = mineList.get(mineIndex);
-
-            if (clickType.isShiftClick()) {
-                // Resetar mina
-                if (mine.isConfigured()) {
-                    mine.reset();
-                    plugin.getLanguageManager().sendMessage(player, "mine.reset-success",
-                            MapBuilder.of("mine", mine.getDisplayName()));
-                    new MineListMenu(plugin, player, page).open();
-                }
-            } else if (clickType == ClickType.LEFT) {
-                // Editar mina
-                new MineEditMenu(plugin, player, mine).open();
-            } else if (clickType == ClickType.RIGHT) {
-                // Teleportar
-                if (mine.getSpawn() != null) {
-                    player.closeInventory();
-                    player.teleport(mine.getSpawn());
-                    plugin.getLanguageManager().sendMessage(player, "mine.teleported",
-                            MapBuilder.of("mine", mine.getDisplayName()));
-                } else {
-                    plugin.getLanguageManager().sendMessage(player, "mine.no-spawn");
-                }
-            }
-        }
-    }
-
-    @Override
-    public Inventory getInventory() {
-        return inventory;
     }
 }

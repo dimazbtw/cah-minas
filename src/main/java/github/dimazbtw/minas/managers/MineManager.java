@@ -3,7 +3,10 @@ package github.dimazbtw.minas.managers;
 import github.dimazbtw.minas.Main;
 import github.dimazbtw.minas.data.Mine;
 import github.dimazbtw.minas.tasks.MineResetTask;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -189,6 +192,69 @@ public class MineManager {
 
         // Task roda a cada segundo para verificar resets
         resetTask = new MineResetTask(this).runTaskTimer(plugin, 20L, 20L);
+    }
+
+    private Location loadLocationFromConfig(YamlConfiguration config, String path) {
+        String worldName = config.getString(path + ".world");
+        if (worldName == null || worldName.isEmpty()) return null;
+
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) return null;
+
+        double x = config.getDouble(path + ".x");
+        double y = config.getDouble(path + ".y");
+        double z = config.getDouble(path + ".z");
+        float yaw = (float) config.getDouble(path + ".yaw", 0);
+        float pitch = (float) config.getDouble(path + ".pitch", 0);
+
+        return new Location(world, x, y, z, yaw, pitch);
+    }
+
+    public void reloadMinasFromWorld(String worldName) {
+        int reloaded = 0;
+
+        for (Mine mine : mines.values()) {
+            File file = new File(plugin.getDataFolder(), "minas/" + mine.getId() + ".yml");
+            if (!file.exists()) continue;
+
+            YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+
+            // Verificar se esta mina usa este mundo
+            boolean needsReload = false;
+
+            if (config.getString("locs.spawn.world", "").equals(worldName) && mine.getSpawn() == null) {
+                needsReload = true;
+            }
+            if (config.getString("locs.exit.world", "").equals(worldName) && mine.getExit() == null) {
+                needsReload = true;
+            }
+            if (config.getString("locs.pos1.world", "").equals(worldName) && mine.getPos1() == null) {
+                needsReload = true;
+            }
+            if (config.getString("locs.pos2.world", "").equals(worldName) && mine.getPos2() == null) {
+                needsReload = true;
+            }
+
+            if (needsReload) {
+                // Recarregar localizações
+                Location spawn = loadLocationFromConfig(config, "locs.spawn");
+                Location exit = loadLocationFromConfig(config, "locs.exit");
+                Location pos1 = loadLocationFromConfig(config, "locs.pos1");
+                Location pos2 = loadLocationFromConfig(config, "locs.pos2");
+
+                if (spawn != null) mine.setSpawn(spawn);
+                if (exit != null) mine.setExit(exit);
+                if (pos1 != null) mine.setPos1(pos1);
+                if (pos2 != null) mine.setPos2(pos2);
+
+                plugin.getLogger().info("§aMina '" + mine.getId() + "' recarregada com sucesso após carregamento do mundo '" + worldName + "'!");
+                reloaded++;
+            }
+        }
+
+        if (reloaded > 0) {
+            plugin.getLogger().info("§a" + reloaded + " mina(s) recarregada(s) após carregamento do mundo '" + worldName + "'!");
+        }
     }
 
     /**

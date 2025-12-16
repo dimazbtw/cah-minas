@@ -46,7 +46,7 @@ public class Mine {
 
     public Mine(String id) {
         this.id = id;
-        this.displayName = "&7Mina " + id;
+        this.displayName = "§7" + id;
         this.resetTime = 300;
         this.resetPercentage = 50.0;
         this.permission = "mina." + id;
@@ -68,11 +68,9 @@ public class Mine {
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
-        // REMOVIDO: Não carregar defaults aqui, pois sobrescreve os valores do arquivo
-
         mine.displayName = config.getString("display", "&7Mina " + id);
 
-        // Carregar localizações
+        // Carregar localizações (com retry se mundo não estiver carregado)
         mine.spawn = loadLocation(config, "locs.spawn");
         mine.exit = loadLocation(config, "locs.exit");
         mine.pos1 = loadLocation(config, "locs.pos1");
@@ -124,15 +122,23 @@ public class Mine {
      */
     public void save() {
         File file = new File(Main.getInstance().getDataFolder(), "minas/" + id + ".yml");
-        YamlConfiguration config = new YamlConfiguration();
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
         config.set("display", displayName);
 
-        // Salvar localizações
-        saveLocation(config, "locs.spawn", spawn);
-        saveLocation(config, "locs.exit", exit);
-        saveLocation(config, "locs.pos1", pos1);
-        saveLocation(config, "locs.pos2", pos2);
+        // Salvar localizações APENAS se não forem null
+        if (spawn != null) {
+            saveLocation(config, "locs.spawn", spawn);
+        }
+        if (exit != null) {
+            saveLocation(config, "locs.exit", exit);
+        }
+        if (pos1 != null) {
+            saveLocation(config, "locs.pos1", pos1);
+        }
+        if (pos2 != null) {
+            saveLocation(config, "locs.pos2", pos2);
+        }
 
         // Salvar opções
         config.set("options.reset-time", resetTime);
@@ -389,24 +395,37 @@ public class Mine {
         String worldName = config.getString(path + ".world");
         if (worldName == null || worldName.isEmpty()) return null;
 
-        World world = Bukkit.getWorld(worldName);
-        if (world == null) {
-            Main.getInstance().getLogger().warning("Mundo '" + worldName + "' não encontrado para localização: " + path);
-            return null;
-        }
-
         double x = config.getDouble(path + ".x");
         double y = config.getDouble(path + ".y");
         double z = config.getDouble(path + ".z");
         float yaw = (float) config.getDouble(path + ".yaw", 0);
         float pitch = (float) config.getDouble(path + ".pitch", 0);
 
+        World world = Bukkit.getWorld(worldName);
+
+        // Se o mundo não foi encontrado, tenta carregar depois
+        if (world == null) {
+            Main.getInstance().getLogger().warning("Mundo '" + worldName + "' não encontrado para: " + path);
+            Main.getInstance().getLogger().warning("A mina será carregada novamente quando o mundo estiver disponível.");
+
+            // Agenda retry após 5 segundos
+            final String finalPath = path;
+            Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+                World retryWorld = Bukkit.getWorld(worldName);
+                if (retryWorld != null) {
+                    Main.getInstance().getLogger().info("Mundo '" + worldName + "' carregado com sucesso para: " + finalPath);
+                }
+            }, 100L); // 5 segundos
+
+            return null;
+        }
+
         return new Location(world, x, y, z, yaw, pitch);
     }
 
     private void saveLocation(YamlConfiguration config, String path, Location loc) {
         if (loc == null) {
-            config.set(path, null);
+            // Não remove a seção, apenas não sobrescreve
             return;
         }
 
