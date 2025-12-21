@@ -96,10 +96,12 @@ public class SessionManager {
     /**
      * Incrementa o contador de blocos minerados
      */
-    public void incrementBlocksMined(Player player) {
+    public void incrementBlocksMined(Player player, int amount) {
         PlayerSession session = sessions.get(player.getUniqueId());
         if (session != null) {
-            session.incrementBlocksMined();
+            for (int i = 0; i < amount; i++) {
+                session.incrementBlocksMined();
+            }
         }
     }
 

@@ -48,6 +48,24 @@ bonus:
   minas.bonus.youtuber: 15
   minas.bonus.streamer: 15
 
+death:
+  # Porcentagem base de XP perdido ao morrer (0-100)
+  xp-loss-percent: 50.0
+
+  # Porcentagem do XP perdido que o killer rouba (0-100)
+  # Exemplo: Se a vítima perde 1000 XP e steal-percent é 50%, o killer ganha 500 XP
+  xp-steal-percent: 50.0
+
+  # Permissões que reduzem a perda de XP
+  # Formato: "permissao:porcentagem_de_reducao"
+  # Exemplo: "utils.vip:10" = reduz 10% da perda (se base é 50%, com VIP perde 40%)
+  loss-reduction-permissions:
+    - "utils.vip:10"
+    - "utils.vip+:20"
+    - "utils.pro:30"
+    - "utils.super:40"
+    - "utils.god:50"
+
 pickaxe-bossbar:
   # Ativar/desativar a bossbar
   enabled: true

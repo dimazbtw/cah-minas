@@ -32,6 +32,7 @@ public class Main extends JavaPlugin {
     private RankingManager rankingManager;
     private SkinManager skinManager;
     private BonusManager bonusManager;
+    private MineLocationCache mineLocationCache;
 
     private MineScoreboardManager scoreboardManager;
     private ActionBarManager actionBarManager;
@@ -63,6 +64,7 @@ public class Main extends JavaPlugin {
         this.bonusManager = new BonusManager(this);
         this.pickaxeManager = new PickaxeManager(this);
         this.inputManager = new InputManager(this);
+        this.mineLocationCache = new MineLocationCache(); // ✅ NOVO
         this.mineManager = new MineManager(this);
         this.sessionManager = new SessionManager(this);
         this.selectionManager = new SelectionManager(this);
@@ -90,6 +92,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new InputListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SkinActivationListener(this), this);
         Bukkit.getPluginManager().registerEvents(new WorldLoadListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerDeathListener(this), this);
 
 
         // Carregar minas
@@ -133,6 +136,7 @@ public class Main extends JavaPlugin {
         enchantManager.reload();
         skinManager.reload();
         bonusManager.reload();
+        mineLocationCache.invalidateCache(); // ✅ NOVO
         mineManager.reloadAllMines();
         if (rankingManager != null) {
             rankingManager.clearCache();

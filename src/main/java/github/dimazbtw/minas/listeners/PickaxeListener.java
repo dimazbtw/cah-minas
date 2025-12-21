@@ -8,6 +8,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -93,20 +94,30 @@ public class PickaxeListener implements Listener {
     /**
      * Impede que jogadores movam a picareta para outros inventários
      */
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
+
+        // IMPORTANTE: Ignorar se for um menu customizado
+        // Os menus da lib já gerenciam seus próprios cliques
+        if (event.getInventory().getHolder() != null) {
+            String holderClass = event.getInventory().getHolder().getClass().getSimpleName();
+            if (holderClass.endsWith("Menu")) {
+                // É um menu customizado, não processar aqui
+                return;
+            }
+        }
 
         ItemStack currentItem = event.getCurrentItem();
         ItemStack cursorItem = event.getCursor();
 
-        // Verificar se está tentando mover picareta de mina
         boolean isCurrentPickaxe = plugin.getPickaxeManager().isMinePickaxe(currentItem);
         boolean isCursorPickaxe = plugin.getPickaxeManager().isMinePickaxe(cursorItem);
 
         if (isCurrentPickaxe || isCursorPickaxe) {
             // Permitir apenas no inventário do jogador
-            if (event.getClickedInventory() != event.getWhoClicked().getInventory()) {
+            if (event.getClickedInventory() != null &&
+                    event.getClickedInventory().getType() != InventoryType.PLAYER) {
                 event.setCancelled(true);
             }
         }

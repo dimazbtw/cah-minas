@@ -14,12 +14,18 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class PickaxeUpgradeMenu {
 
     private final Main plugin;
     private final Player player;
     private final EnchantManager enchantManager;
     private InventoryGUI gui;
+
+    private final Map<String, Long> clickCooldowns = new HashMap<>();
+    private static final long COOLDOWN_MS = 200; // 200ms entre cliques
 
     public PickaxeUpgradeMenu(Main plugin, Player player) {
         this.plugin = plugin;
@@ -98,20 +104,56 @@ public class PickaxeUpgradeMenu {
         item.setItemMeta(meta);
     }
 
+    private boolean isOnCooldown(String enchantId) {
+        Long lastClick = clickCooldowns.get(enchantId);
+        if (lastClick == null) return false;
+
+        long timeSince = System.currentTimeMillis() - lastClick;
+        return timeSince < COOLDOWN_MS;
+    }
+
+    private void setCooldown(String enchantId) {
+        clickCooldowns.put(enchantId, System.currentTimeMillis());
+    }
+
     private void setupEnchantActions(ItemButton button, String enchantId) {
         EnchantConfig enchant = enchantManager.getEnchant(enchantId);
         if (enchant == null) return;
 
-        // LEFT e SHIFT_LEFT: Upgrade 1 nível
-        button.addAction(ClickType.LEFT, e -> handleUpgrade(enchantId, 1));
-        button.addAction(ClickType.SHIFT_LEFT, e -> handleUpgrade(enchantId, 1));
+        // LEFT: Upgrade 1 nível
+        button.addAction(ClickType.LEFT, e -> {
+            if (isOnCooldown(enchantId)) {
+                plugin.getLogger().warning("Duplicate click prevented for " + enchantId);
+                return;
+            }
+            setCooldown(enchantId);
+            handleUpgrade(enchantId, 1);
+        });
 
-        // RIGHT e SHIFT_RIGHT: Abrir seleção de quantidade
-        button.addAction(ClickType.RIGHT, e -> openAmountSelection(enchantId));
-        button.addAction(ClickType.SHIFT_RIGHT, e -> openAmountSelection(enchantId));
+        button.addAction(ClickType.SHIFT_LEFT, e -> {
+            if (isOnCooldown(enchantId)) return;
+            setCooldown(enchantId);
+            handleUpgrade(enchantId, 1);
+        });
 
-        // DROP (Q): Upgrade máximo possível
+        // RIGHT: Seleção de quantidade
+        button.addAction(ClickType.RIGHT, e -> {
+            if (isOnCooldown(enchantId)) return;
+            setCooldown(enchantId);
+            openAmountSelection(enchantId);
+        });
+
+        button.addAction(ClickType.SHIFT_RIGHT, e -> {
+            if (isOnCooldown(enchantId)) return;
+            setCooldown(enchantId);
+            openAmountSelection(enchantId);
+        });
+
+        // DROP: Upgrade máximo
         button.addAction(ClickType.DROP, e -> {
+            if (isOnCooldown(enchantId)) return;
+            setCooldown(enchantId);
+
             int maxUpgrades = enchantManager.calculateMaxUpgrades(player, enchantId);
             if (maxUpgrades <= 0) {
                 player.sendMessage(enchantManager.getMessage("upgrade-no-resources"));
@@ -126,7 +168,6 @@ public class PickaxeUpgradeMenu {
         EnchantConfig enchant = enchantManager.getEnchant(enchantId);
         if (enchant == null) return;
 
-        // Verificar se está desbloqueado
         if (!enchantManager.isEnchantUnlocked(player, enchantId)) {
             player.sendMessage(enchantManager.getMessage("upgrade-locked")
                     .replace("{level}", String.valueOf(enchant.getRequiredLevel())));
@@ -134,7 +175,6 @@ public class PickaxeUpgradeMenu {
             return;
         }
 
-        // Verificar nível máximo
         int currentLevel = enchantManager.getEnchantLevel(player, enchantId);
         if (currentLevel >= enchant.getMaxLevel()) {
             player.sendMessage(enchantManager.getMessage("upgrade-max"));
@@ -142,12 +182,14 @@ public class PickaxeUpgradeMenu {
             return;
         }
 
-        // Processar upgrade
         boolean success = enchantManager.processUpgrade(player, enchantId, levels);
 
         if (success) {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.5f);
-            createGUI(); // Recriar GUI para atualizar valores
+
+            // Limpar cooldowns ao recriar GUI
+            clickCooldowns.clear();
+            createGUI();
             open();
         } else {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);

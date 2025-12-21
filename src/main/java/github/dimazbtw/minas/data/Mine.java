@@ -355,18 +355,17 @@ public class Mine {
     /**
      * Chamado quando um bloco é quebrado na mina
      */
-    public void onBlockBreak() {
-        if (currentBlocks > 0) {
-            currentBlocks--;
-        }
+    public void onBlockBreak(int amount) {
+        this.currentBlocks -= amount;
+        checkReset();
+    }
 
-        // Verificar se deve resetar por porcentagem
+    private void checkReset() {
         double percentage = getPercentageRemaining();
         if (percentage <= resetPercentage) {
             reset();
         }
     }
-
     /**
      * Obtém a porcentagem de blocos restantes
      */
