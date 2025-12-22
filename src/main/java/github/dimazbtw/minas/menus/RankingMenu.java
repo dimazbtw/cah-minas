@@ -98,14 +98,6 @@ public class RankingMenu {
                 InventorySize.FIVE_ROWS);
         gui.setDefaultAllCancell(true);
 
-
-        // Título do ranking
-        ItemButton titleBtn = new ItemButton(currentType.getIcon(),
-                "§6§l" + currentType.getDisplayName(),
-                "",
-                "§7Top 10 jogadores");
-        gui.setButton(4, titleBtn);
-
         if (currentRanking.isEmpty()) {
             ItemButton emptyBtn = new ItemButton(Material.BARRIER, "§c§lSem Dados",
                     "",
@@ -113,7 +105,7 @@ public class RankingMenu {
             gui.setButton(22, emptyBtn);
         } else {
             int[] slots = {10, 11, 12, 13, 14, 15, 16, 21, 22, 23};
-            String[] colors = {"§6", "§f", "§c", "§7", "§7", "§7", "§7", "§7", "§7", "§7"};
+            String[] colors = {"§a", "§e", "§f", "§7", "§7", "§7", "§7", "§7", "§7", "§7"};
             String[] prefixes = {"§6§l1º", "§f§l2º", "§c§l3º", "§74º", "§75º", "§76º", "§77º", "§78º", "§79º", "§710º"};
 
             for (int i = 0; i < Math.min(currentRanking.size(), 10); i++) {

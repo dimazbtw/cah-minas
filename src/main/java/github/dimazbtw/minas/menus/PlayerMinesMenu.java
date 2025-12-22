@@ -31,10 +31,10 @@ public class PlayerMinesMenu {
     public void open() {
         PaginatedGUIBuilder builder = new PaginatedGUIBuilder("§8Lista de Minas - Página {page}",
                 "xxxxxxxxx" +
-                        "x#######x" +
-                        "x#######x" +
-                        "x#######x" +
-                        "<#######>");
+                        "xx#####xx" +
+                        "<x#####x>" +
+                        "xx#####xx" +
+                        "xxxxxxxxx");
 
         builder.setDefaultAllCancell(true);
 
@@ -67,13 +67,8 @@ public class PlayerMinesMenu {
     private ItemButton createMineButton(Mine mine, boolean isBest) {
         List<String> lore = new ArrayList<>();
 
-        if (isBest) {
-            lore.add("");
-            lore.add("§a§l★ Sua melhor mina!");
-        }
-
         lore.add("");
-        lore.add("§eClique para teleportar!");
+        lore.add("§eClica para ir.!");
 
         String displayName = isBest ? "§6§l" + mine.getDisplayName() : "§f" + mine.getDisplayName() + " §7[" + String.format("%.1f%%", mine.getPercentageRemaining()) + "]";
 

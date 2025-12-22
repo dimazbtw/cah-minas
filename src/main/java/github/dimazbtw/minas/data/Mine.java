@@ -145,16 +145,9 @@ public class Mine {
         File file = new File(Main.getInstance().getDataFolder(), "minas/" + id + ".yml");
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
-        // NUNCA sobrescrever com valores padrão
-        // Apenas setar se já existir no config OU se for diferente do padrão
-
-        if (config.contains("display") || !displayName.equals("§7" + id)) {
-            config.set("display", displayName);
-        }
-
-        if (config.contains("material") || !materialData.equals("DIAMOND_PICKAXE")) {
-            config.set("material", materialData);
-        }
+        // ✅ SEMPRE salvar display e material (remover lógica condicional)
+        config.set("display", displayName);
+        config.set("material", materialData);
 
         // Localizações
         if (spawn != null) {

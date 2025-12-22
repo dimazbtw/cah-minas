@@ -6,6 +6,8 @@ import github.dimazbtw.lib.inventories.ItemButton;
 import github.dimazbtw.minas.Main;
 import github.dimazbtw.minas.data.Mine;
 import github.dimazbtw.minas.utils.MapBuilder;
+import github.dimazbtw.minas.utils.SkullUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -35,6 +37,52 @@ public class MineEditMenu {
 
         // Info central
         gui.setButton(4, createInfoButton());
+
+        // ✅ NOVO - Editar Display
+        ItemButton displayBtn = new ItemButton(Material.NAME_TAG, "§e§lEditar Nome",
+                "", "§7Atual: " + mine.getDisplayName(), "",
+                "§eClique para alterar o nome de exibição");
+        displayBtn.setDefaultAction(e -> {
+            player.closeInventory();
+            plugin.getInputManager().requestInput(player, "display", (input) -> {
+                mine.setDisplayName(input.replace("&", "§"));
+                mine.save();
+                plugin.getLanguageManager().sendMessage(player, "mine.display-changed");
+
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    new MineEditMenu(plugin, player, mine).open();
+                });
+            });
+            player.sendMessage("§aDigite o novo nome da mina (use & para cores):");
+            player.sendMessage("§7Ou digite §ccancelar §7para cancelar.");
+        });
+        gui.setButton(30, displayBtn);
+
+        // ✅ NOVO - Editar Material
+        String currentMaterial = mine.isBase64Head() ? "§7Cabeça customizada" : "§f" + mine.getMaterial().name();
+        ItemButton materialBtn = new ItemButton(mine.getMaterial(), "§6§lEditar Material/Ícone",
+                "", "§7Atual: " + currentMaterial, "",
+                "§7Digite o nome do material (ex: DIAMOND_PICKAXE)",
+                "§7ou cole a URL/hash da textura de cabeça.",
+                "",
+                "§eClique para alterar");
+        materialBtn.setDefaultAction(e -> {
+            player.closeInventory();
+            plugin.getInputManager().requestInput(player, "material", (input) -> {
+                handleMaterialInput(input);
+            });
+            player.sendMessage("§6§l━━━━ Alterar Material da Mina ━━━━");
+            player.sendMessage("");
+            player.sendMessage("§aDigite o material, URL ou hash da textura:");
+            player.sendMessage("§7Exemplos:");
+            player.sendMessage("§f • DIAMOND_PICKAXE");
+            player.sendMessage("§f • NETHERITE_PICKAXE");
+            player.sendMessage("§f • b52446481d70471ba61177b51cbf8a098c70324e3786b97447c909f077669b7b");
+            player.sendMessage("§f • http://textures.minecraft.net/texture/...");
+            player.sendMessage("");
+            player.sendMessage("§7Ou digite §ccancelar §7para cancelar.");
+        });
+        gui.setButton(32, materialBtn);
 
         // Spawn
         ItemButton spawnBtn = new ItemButton(Material.ENDER_PEARL, "§a§lDefinir Spawn",
@@ -129,7 +177,7 @@ public class MineEditMenu {
         ItemButton blocksBtn = new ItemButton(Material.CHEST, "§6§lEditar Blocos",
                 "", "§7Blocos configurados: §f" + mine.getBlocks().size(), "",
                 "§eClique para abrir editor de blocos");
-        blocksBtn.setDefaultAction(e -> new MineBlocksMenu(plugin, player, mine).open()); // ✅ CORRIGIDO
+        blocksBtn.setDefaultAction(e -> new MineBlocksMenu(plugin, player, mine).open());
         gui.setButton(31, blocksBtn);
 
         // Resetar mina
@@ -162,11 +210,68 @@ public class MineEditMenu {
                     MapBuilder.of("mine", mine.getId()));
         });
         gui.setButton(43, deleteBtn);
+
         // Voltar
         ItemButton backBtn = new ItemButton(Material.ARROW, "§c§lVoltar",
                 "", "§eClique para voltar à lista");
-        backBtn.setDefaultAction(e -> new MineListMenu(plugin, player).open()); // ✅ CORRIGIDO
+        backBtn.setDefaultAction(e -> new MineListMenu(plugin, player).open());
         gui.setButton(49, backBtn);
+    }
+
+    // ✅ NOVO - Processar input de material
+    private void handleMaterialInput(String input) {
+        input = input.trim();
+
+        // Verificar se é cancelamento
+        if (input.equalsIgnoreCase("cancelar") || input.equalsIgnoreCase("cancel")) {
+            player.sendMessage("§cAlteração cancelada.");
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                new MineEditMenu(plugin, player, mine).open();
+            });
+            return;
+        }
+
+        // Verificar se é uma URL completa ou hash de textura
+        if (input.startsWith("http://") || input.startsWith("https://") || isTextureHash(input)) {
+            String normalizedUrl = SkullUtils.normalizeTextureUrl(input);
+
+            if (normalizedUrl != null) {
+                mine.setMaterialData(normalizedUrl);
+                mine.save();
+                player.sendMessage("§aMaterial alterado para cabeça customizada!");
+                player.sendMessage("§7Hash: §f" + SkullUtils.extractTextureHash(normalizedUrl));
+            } else {
+                player.sendMessage("§cURL/Hash de textura inválido!");
+            }
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                new MineEditMenu(plugin, player, mine).open();
+            });
+            return;
+        }
+
+        // Tentar como material
+        try {
+            Material material = Material.valueOf(input.toUpperCase());
+            mine.setMaterialData(material.name());
+            mine.save();
+            player.sendMessage("§aMaterial alterado para §f" + material.name() + "§a!");
+        } catch (IllegalArgumentException e) {
+            player.sendMessage("§cMaterial inválido: §f" + input);
+            player.sendMessage("§7Certifica-te de que digitaste corretamente.");
+        }
+
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            new MineEditMenu(plugin, player, mine).open();
+        });
+    }
+
+    /**
+     * Verifica se uma string parece ser um hash de textura (64 caracteres hexadecimais)
+     */
+    private boolean isTextureHash(String input) {
+        // Hash de textura do Minecraft tem exatamente 64 caracteres hexadecimais
+        return input != null && input.matches("^[a-fA-F0-9]{64}$");
     }
 
     private ItemButton createInfoButton() {

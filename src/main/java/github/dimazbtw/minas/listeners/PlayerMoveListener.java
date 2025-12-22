@@ -1,6 +1,7 @@
 package github.dimazbtw.minas.listeners;
 
 import github.dimazbtw.minas.Main;
+import github.dimazbtw.minas.menus.MineBlocksMenu;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -50,5 +51,7 @@ public class PlayerMoveListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.getLocationTracker().removePlayer(event.getPlayer());
         plugin.getPickaxeBossBarManager().onPlayerQuit(event.getPlayer());
+
+        MineBlocksMenu.cleanupPlayer(event.getPlayer().getUniqueId());
     }
 }
