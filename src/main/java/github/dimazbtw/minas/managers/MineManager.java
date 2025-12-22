@@ -44,7 +44,14 @@ public class MineManager {
             try {
                 Mine mine = Mine.fromFile(file);
                 mines.put(mine.getId().toLowerCase(), mine);
+
+                // Log detalhado
                 plugin.getLogger().info("Mina carregada: " + mine.getId());
+                plugin.getLogger().info("  Display: " + mine.getDisplayName());
+                plugin.getLogger().info("  Material: " + mine.getMaterialData());
+                plugin.getLogger().info("  Order: " + mine.getOrder());
+                plugin.getLogger().info("  Configurada: " + mine.isConfigured());
+
             } catch (Exception e) {
                 plugin.getLogger().severe("Erro ao carregar mina " + file.getName() + ": " + e.getMessage());
                 e.printStackTrace();

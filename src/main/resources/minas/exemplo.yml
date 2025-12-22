@@ -4,7 +4,7 @@
 
 # Nome de exibição da mina (suporta cores)
 display: "&7Mina Padrão"
-
+material: STONE
 # Localizações
 locs:
   # Spawn da mina (onde jogadores teleportam)

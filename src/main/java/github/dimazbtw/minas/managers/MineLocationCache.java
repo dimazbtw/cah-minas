@@ -1,3 +1,4 @@
+// MineLocationCache.java - Corrigido
 package github.dimazbtw.minas.managers;
 
 import github.dimazbtw.minas.data.Mine;
@@ -13,6 +14,10 @@ public class MineLocationCache {
     private final Map<String, Long> cacheTimestamp = new ConcurrentHashMap<>();
 
     public Mine getCachedMine(Location location, MineManager mineManager) {
+        if (location == null || location.getWorld() == null) {
+            return null;
+        }
+
         String key = getLocationKey(location);
         Long timestamp = cacheTimestamp.get(key);
 
@@ -21,10 +26,19 @@ public class MineLocationCache {
             return locationCache.get(key);
         }
 
-        // Cache inválido, buscar novamente
+        // Cache inválido ou inexistente, buscar novamente
         Mine mine = mineManager.getMineAt(location);
-        locationCache.put(key, mine);
-        cacheTimestamp.put(key, System.currentTimeMillis());
+
+        // IMPORTANTE: Só adicionar ao cache se não for null
+        // ConcurrentHashMap não aceita valores null
+        if (mine != null) {
+            locationCache.put(key, mine);
+            cacheTimestamp.put(key, System.currentTimeMillis());
+        } else {
+            // Remover do cache se existia mas agora é null
+            locationCache.remove(key);
+            cacheTimestamp.remove(key);
+        }
 
         return mine;
     }
@@ -41,6 +55,27 @@ public class MineLocationCache {
     }
 
     public void invalidateMine(Mine mine) {
+        if (mine == null) return;
         locationCache.entrySet().removeIf(entry -> entry.getValue() == mine);
+    }
+
+    /**
+     * Invalida cache de uma região específica
+     */
+    public void invalidateRegion(Location location) {
+        if (location == null || location.getWorld() == null) return;
+
+        String key = getLocationKey(location);
+        locationCache.remove(key);
+        cacheTimestamp.remove(key);
+    }
+
+    /**
+     * Obtém estatísticas do cache (para debug)
+     */
+    public String getCacheStats() {
+        return String.format("Cache: %d entradas, %d timestamps",
+                locationCache.size(),
+                cacheTimestamp.size());
     }
 }

@@ -1,22 +1,33 @@
+// PlayerDeathListener.java - Corrigido
 package github.dimazbtw.minas.listeners;
 
 import github.dimazbtw.minas.Main;
+import github.dimazbtw.minas.data.Mine;
 import github.dimazbtw.minas.data.PickaxeData;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
 
 public class PlayerDeathListener implements Listener {
 
     private final Main plugin;
 
+    // Armazena jogadores que morreram em minas PvP para teleporte após respawn
+    private final Map<UUID, Location> pendingRespawnTeleports;
+
     public PlayerDeathListener(Main plugin) {
         this.plugin = plugin;
+        this.pendingRespawnTeleports = new HashMap<>();
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -33,85 +44,134 @@ public class PlayerDeathListener implements Listener {
             }
         }
 
+        // Verificar se o jogador está em uma mina
+        Mine victimMine = plugin.getSessionManager().getCurrentMine(victim);
+
+        if (victimMine != null && victimMine.isPvpEnabled()) {
+            // Morreu em mina com PvP ativado
+            handlePvPDeath(victim, victimMine);
+        }
+
         // Se foi morto por outro jogador, processar roubo de XP
         if (killer != null && killer != victim) {
             processXpSteal(victim, killer);
         }
     }
 
+    /**
+     * Trata morte em mina com PvP ativado
+     */
+    private void handlePvPDeath(Player victim, Mine mine) {
+        plugin.getLogger().info("Jogador " + victim.getName() + " morreu em mina PvP: " + mine.getId());
+
+        // Remover da sessão IMEDIATAMENTE
+        plugin.getSessionManager().removeSession(victim);
+
+        // Determinar localização de saída
+        Location exitLocation = mine.getExit();
+        if (exitLocation == null) {
+            // Fallback: spawn do mundo
+            exitLocation = victim.getWorld().getSpawnLocation();
+            plugin.getLogger().warning("Mina " + mine.getId() + " não tem exit definido, usando spawn do mundo");
+        }
+
+        // Armazenar localização para teleporte após respawn
+        pendingRespawnTeleports.put(victim.getUniqueId(), exitLocation);
+
+        plugin.getLogger().info("Teleporte agendado para: " + exitLocation);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+
+        // Verificar se tem teleporte pendente
+        if (pendingRespawnTeleports.containsKey(uuid)) {
+            Location exitLocation = pendingRespawnTeleports.remove(uuid);
+
+            plugin.getLogger().info("Definindo respawn de " + player.getName() + " para: " + exitLocation);
+
+            // Definir localização de respawn
+            event.setRespawnLocation(exitLocation);
+
+            // Enviar mensagem após 1 tick para garantir que o jogador já respawnou
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    plugin.getLanguageManager().sendMessage(player, "mine.pvp-death-exit");
+                }
+            }, 1L);
+        }
+    }
+
     private void processXpSteal(Player victim, Player killer) {
         PickaxeData victimData = plugin.getDatabaseManager().getPickaxeData(victim.getUniqueId());
 
-        // Verificar se a vítima tem XP
         if (victimData.getExp() <= 0 && victimData.getLevel() <= 1) {
             return;
         }
 
-        // Calcular XP total da vítima
         int victimTotalXp = calculateTotalXp(victimData);
 
         if (victimTotalXp <= 0) {
             return;
         }
 
-        // Obter porcentagem base de perda (configurável)
         double baseLossPercent = plugin.getConfig().getDouble("death.xp-loss-percent", 50.0);
-
-        // Calcular redução de perda baseado em permissões
         double lossReduction = calculateLossReduction(victim);
-
-        // Porcentagem final de perda
         double finalLossPercent = Math.max(0, baseLossPercent - lossReduction);
 
-        // Calcular XP perdido
         int xpLost = (int) (victimTotalXp * (finalLossPercent / 100.0));
 
         if (xpLost <= 0) {
             return;
         }
 
-        // Obter porcentagem que o killer rouba (configurável)
         double stealPercent = plugin.getConfig().getDouble("death.xp-steal-percent", 50.0);
         int xpStolen = (int) (xpLost * (stealPercent / 100.0));
 
-        // Remover XP da vítima
         removeXpFromPlayer(victimData, xpLost);
         plugin.getDatabaseManager().savePickaxeData(victimData);
-        plugin.getPickaxeManager().updatePickaxe(victim);
 
-        // Adicionar XP ao killer
+        // Atualizar picareta com delay para garantir que o jogador respawnou
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (victim.isOnline()) {
+                plugin.getPickaxeManager().updatePickaxe(victim);
+            }
+        }, 5L);
+
         if (xpStolen > 0) {
             PickaxeData killerData = plugin.getDatabaseManager().getPickaxeData(killer.getUniqueId());
             killerData.addExp(xpStolen);
             plugin.getDatabaseManager().savePickaxeData(killerData);
             plugin.getPickaxeManager().updatePickaxe(killer);
 
-            // Mensagens
             String xpLostFormatted = formatNumber(xpLost);
             String xpStolenFormatted = formatNumber(xpStolen);
 
-            victim.sendMessage(plugin.getLanguageManager().getMessage(victim, "death.xp-lost")
-                    .replace("{amount}", xpLostFormatted)
-                    .replace("{percent}", String.format("%.1f", finalLossPercent))
-                    .replace("{killer}", killer.getName()));
+            // Enviar mensagens com delay
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (victim.isOnline()) {
+                    victim.sendMessage(plugin.getLanguageManager().getMessage(victim, "death.xp-lost")
+                            .replace("{amount}", xpLostFormatted)
+                            .replace("{percent}", String.format("%.1f", finalLossPercent))
+                            .replace("{killer}", killer.getName()));
+                }
 
-            killer.sendMessage(plugin.getLanguageManager().getMessage(killer, "death.xp-stolen")
-                    .replace("{amount}", xpStolenFormatted)
-                    .replace("{victim}", victim.getName()));
+                if (killer.isOnline()) {
+                    killer.sendMessage(plugin.getLanguageManager().getMessage(killer, "death.xp-stolen")
+                            .replace("{amount}", xpStolenFormatted)
+                            .replace("{victim}", victim.getName()));
+                }
+            }, 10L);
         }
     }
 
-    /**
-     * Calcula a redução de perda baseado em permissões
-     * Formato: utils.vip:10 = 10% de redução
-     */
     private double calculateLossReduction(Player player) {
         double totalReduction = 0;
 
-        // Verificar permissões configuradas
         for (String permission : plugin.getConfig().getStringList("death.loss-reduction-permissions")) {
             if (player.hasPermission(permission)) {
-                // Formato: "utils.vip:10"
                 String[] parts = permission.split(":");
                 if (parts.length == 2) {
                     try {
@@ -123,57 +183,62 @@ public class PlayerDeathListener implements Listener {
             }
         }
 
-        // Limitar a 100% de redução (não pode perder nada)
         return Math.min(100, totalReduction);
     }
 
-    /**
-     * Calcula o XP total do jogador (considerando níveis)
-     */
     private int calculateTotalXp(PickaxeData data) {
         int total = data.getExp();
 
-        // Somar XP de todos os níveis anteriores
         for (int i = 1; i < data.getLevel(); i++) {
-            total += i * 100; // Fórmula: level * 100
+            if (i <= 100) {
+                total += i * 100;
+            } else if (i <= 500) {
+                total += 10000 + ((i - 100) * 150);
+            } else if (i <= 1000) {
+                total += 70000 + ((i - 500) * 200);
+            } else {
+                total += 170000 + ((i - 1000) * 250);
+            }
         }
 
         return total;
     }
 
-    /**
-     * Remove XP do jogador, podendo descer de nível
-     */
     private void removeXpFromPlayer(PickaxeData data, int amount) {
         int currentXp = data.getExp();
 
-        // Se o XP atual cobre a perda
         if (currentXp >= amount) {
             data.setExp(currentXp - amount);
             return;
         }
 
-        // Precisa descer de nível
         int remaining = amount - currentXp;
         data.setExp(0);
 
         while (remaining > 0 && data.getLevel() > 1) {
             int previousLevel = data.getLevel() - 1;
-            int xpForPreviousLevel = previousLevel * 100;
+            int xpForPreviousLevel;
+
+            if (previousLevel <= 100) {
+                xpForPreviousLevel = previousLevel * 100;
+            } else if (previousLevel <= 500) {
+                xpForPreviousLevel = 10000 + ((previousLevel - 100) * 150);
+            } else if (previousLevel <= 1000) {
+                xpForPreviousLevel = 70000 + ((previousLevel - 500) * 200);
+            } else {
+                xpForPreviousLevel = 170000 + ((previousLevel - 1000) * 250);
+            }
 
             if (remaining >= xpForPreviousLevel) {
-                // Desce mais um nível
                 remaining -= xpForPreviousLevel;
                 data.setLevel(previousLevel);
             } else {
-                // Para neste nível com XP restante
                 data.setLevel(previousLevel);
                 data.setExp(xpForPreviousLevel - remaining);
                 remaining = 0;
             }
         }
 
-        // Garantir que não fique negativo
         if (data.getLevel() < 1) {
             data.setLevel(1);
             data.setExp(0);

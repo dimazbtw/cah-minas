@@ -1,3 +1,4 @@
+// Mine.java - Adicionar campo material
 package github.dimazbtw.minas.data;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
@@ -13,14 +14,13 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.*;
 
 public class Mine {
 
     private final String id;
     private String displayName;
+    private String materialData; // Pode ser material ou base64
 
     // Localizações
     private Location spawn;
@@ -29,11 +29,11 @@ public class Mine {
     private Location pos2;
 
     // Opções
-    private int resetTime; // em segundos
+    private int resetTime;
     private double resetPercentage;
     private String permission;
     private boolean pvpEnabled;
-    private int order; // Ordem de prioridade
+    private int order;
 
     // Blocos
     private final Map<Material, MineBlock> blocks;
@@ -47,6 +47,7 @@ public class Mine {
     public Mine(String id) {
         this.id = id;
         this.displayName = "§7" + id;
+        this.materialData = "DIAMOND_PICKAXE"; // Material padrão
         this.resetTime = 300;
         this.resetPercentage = 50.0;
         this.permission = "mina." + id;
@@ -68,20 +69,42 @@ public class Mine {
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
-        mine.displayName = config.getString("display", "&7Mina " + id);
+        // Carregar display - NÃO usar valor padrão se não existir
+        if (config.contains("display")) {
+            mine.displayName = config.getString("display");
+        }
 
-        // Carregar localizações (com retry se mundo não estiver carregado)
+        // Carregar material - NÃO usar valor padrão se não existir
+        if (config.contains("material")) {
+            mine.materialData = config.getString("material");
+        }
+
+        // Carregar localizações
         mine.spawn = loadLocation(config, "locs.spawn");
         mine.exit = loadLocation(config, "locs.exit");
         mine.pos1 = loadLocation(config, "locs.pos1");
         mine.pos2 = loadLocation(config, "locs.pos2");
 
         // Carregar opções
-        mine.resetTime = config.getInt("options.reset-time", 300);
-        mine.resetPercentage = config.getDouble("options.percentage", 50.0);
-        mine.permission = config.getString("options.permission", "mina." + id);
-        mine.pvpEnabled = config.getBoolean("options.pvp", false);
-        mine.order = config.getInt("options.order", 0);
+        if (config.contains("options.reset-time")) {
+            mine.resetTime = config.getInt("options.reset-time");
+        }
+
+        if (config.contains("options.percentage")) {
+            mine.resetPercentage = config.getDouble("options.percentage");
+        }
+
+        if (config.contains("options.permission")) {
+            mine.permission = config.getString("options.permission");
+        }
+
+        if (config.contains("options.pvp")) {
+            mine.pvpEnabled = config.getBoolean("options.pvp");
+        }
+
+        if (config.contains("options.order")) {
+            mine.order = config.getInt("options.order");
+        }
 
         // Carregar blocos
         ConfigurationSection blocksSection = config.getConfigurationSection("blocks");
@@ -97,7 +120,6 @@ public class Mine {
                         mineBlock.setExp(blockSection.getInt("xp", 0));
                         mineBlock.setMoney(blockSection.getDouble("money", 0.0));
 
-                        // Carregar rewards
                         List<String> rewards = blockSection.getStringList("rewards");
                         mineBlock.setRewards(rewards);
 
@@ -109,7 +131,6 @@ public class Mine {
             }
         }
 
-        // Calcular total de blocos
         if (mine.isConfigured()) {
             mine.calculateTotalBlocks();
         }
@@ -124,9 +145,18 @@ public class Mine {
         File file = new File(Main.getInstance().getDataFolder(), "minas/" + id + ".yml");
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
-        config.set("display", displayName);
+        // NUNCA sobrescrever com valores padrão
+        // Apenas setar se já existir no config OU se for diferente do padrão
 
-        // Salvar localizações APENAS se não forem null
+        if (config.contains("display") || !displayName.equals("§7" + id)) {
+            config.set("display", displayName);
+        }
+
+        if (config.contains("material") || !materialData.equals("DIAMOND_PICKAXE")) {
+            config.set("material", materialData);
+        }
+
+        // Localizações
         if (spawn != null) {
             saveLocation(config, "locs.spawn", spawn);
         }
@@ -140,22 +170,40 @@ public class Mine {
             saveLocation(config, "locs.pos2", pos2);
         }
 
-        // Salvar opções
-        config.set("options.reset-time", resetTime);
-        config.set("options.percentage", resetPercentage);
-        config.set("options.permission", permission);
-        config.set("options.pvp", pvpEnabled);
-        config.set("options.order", order);
+        // Opções - apenas salvar se já existe no config OU se mudou do padrão
+        if (config.contains("options.reset-time") || resetTime != 300) {
+            config.set("options.reset-time", resetTime);
+        }
 
-        // Salvar blocos
-        for (Map.Entry<Material, MineBlock> entry : blocks.entrySet()) {
-            String path = "blocks." + entry.getKey().name();
-            MineBlock block = entry.getValue();
+        if (config.contains("options.percentage") || resetPercentage != 50.0) {
+            config.set("options.percentage", resetPercentage);
+        }
 
-            config.set(path + ".chance", block.getChance());
-            config.set(path + ".exp", block.getExp());
-            config.set(path + ".money", block.getMoney());
-            config.set(path + ".rewards", block.getRewards());
+        if (config.contains("options.permission") || !permission.equals("mina." + id)) {
+            config.set("options.permission", permission);
+        }
+
+        if (config.contains("options.pvp") || pvpEnabled) {
+            config.set("options.pvp", pvpEnabled);
+        }
+
+        if (config.contains("options.order") || order != 0) {
+            config.set("options.order", order);
+        }
+
+        // Blocos
+        if (!blocks.isEmpty()) {
+            config.set("blocks", null);
+
+            for (Map.Entry<Material, MineBlock> entry : blocks.entrySet()) {
+                String path = "blocks." + entry.getKey().name();
+                MineBlock block = entry.getValue();
+
+                config.set(path + ".chance", block.getChance());
+                config.set(path + ".xp", block.getExp());
+                config.set(path + ".money", block.getMoney());
+                config.set(path + ".rewards", block.getRewards());
+            }
         }
 
         try {
@@ -166,52 +214,59 @@ public class Mine {
     }
 
     /**
-     * Reseta a mina (preenche com blocos) usando FAWE para máxima performance
+     * Reseta a mina de forma otimizada usando FAWE
      */
     public void reset() {
         if (!isConfigured() || resetting) return;
 
         resetting = true;
 
-        // Teleportar jogadores para o spawn antes de resetar
-        if (spawn != null) {
-            for (Player player : getPlayersInMine()) {
-                player.teleport(spawn);
-                Main.getInstance().getLanguageManager().sendMessage(player, "mine.reset-teleport");
+        // Teleportar jogadores dependendo do modo PvP
+        if (pvpEnabled) {
+            teleportPlayersToTop();
+        } else {
+            if (spawn != null) {
+                for (Player player : getPlayersInMine()) {
+                    player.teleport(spawn);
+                    Main.getInstance().getLanguageManager().sendMessage(player, "mine.reset-teleport");
+                }
             }
         }
 
-        // Usar FAWE para performance
-        // Usar FAWE para performance
-        try {
-            com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(pos1.getWorld());
+        Bukkit.getScheduler().runTaskAsynchronously(Main.getInstance(), () -> {
+            try {
+                com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(pos1.getWorld());
 
-            com.sk89q.worldedit.regions.CuboidRegion region = new com.sk89q.worldedit.regions.CuboidRegion(
-                    weWorld,
-                    com.sk89q.worldedit.math.BlockVector3.at(pos1.getBlockX(), pos1.getBlockY(), pos1.getBlockZ()),
-                    com.sk89q.worldedit.math.BlockVector3.at(pos2.getBlockX(), pos2.getBlockY(), pos2.getBlockZ())
-            );
+                com.sk89q.worldedit.regions.CuboidRegion region = new com.sk89q.worldedit.regions.CuboidRegion(
+                        weWorld,
+                        com.sk89q.worldedit.math.BlockVector3.at(pos1.getBlockX(), pos1.getBlockY(), pos1.getBlockZ()),
+                        com.sk89q.worldedit.math.BlockVector3.at(pos2.getBlockX(), pos2.getBlockY(), pos2.getBlockZ())
+                );
 
-            com.sk89q.worldedit.function.pattern.Pattern pattern = createWeightedPattern();
+                com.sk89q.worldedit.function.pattern.Pattern pattern = createWeightedPattern();
 
-            com.sk89q.worldedit.EditSession editSession = com.sk89q.worldedit.WorldEdit.getInstance()
-                    .newEditSessionBuilder()
-                    .world(weWorld)
-                    .build();
+                com.sk89q.worldedit.EditSession editSession = com.sk89q.worldedit.WorldEdit.getInstance()
+                        .newEditSessionBuilder()
+                        .world(weWorld)
+                        .build();
 
-            editSession.setBlocks(region, pattern);
-            editSession.close();
+                editSession.setBlocks(region, pattern);
+                editSession.close();
 
-            currentBlocks = totalBlocks;
-            lastReset = System.currentTimeMillis();
-            resetting = false;
+                currentBlocks = totalBlocks;
+                lastReset = System.currentTimeMillis();
+                resetting = false;
 
-        } catch (Exception e) {
-            Main.getInstance().getLogger().severe("Erro ao resetar mina " + id + " com FAWE: " + e.getMessage());
-            e.printStackTrace();
-            resetting = false;
-            resetLegacy();
-        }
+                Main.getInstance().getLogger().info("§aMina " + id + " resetada com sucesso!");
+
+            } catch (Exception e) {
+                Main.getInstance().getLogger().severe("Erro ao resetar mina " + id + " com FAWE: " + e.getMessage());
+                e.printStackTrace();
+                resetting = false;
+
+                Bukkit.getScheduler().runTask(Main.getInstance(), this::resetLegacy);
+            }
+        });
     }
 
     /**
@@ -225,12 +280,10 @@ public class Mine {
             Material material = entry.getKey();
             double chance = entry.getValue().getChance();
 
-            // Converter Bukkit Material para WorldEdit BlockType
             com.sk89q.worldedit.world.block.BlockType blockType =
                     com.sk89q.worldedit.bukkit.BukkitAdapter.asBlockType(material);
 
             if (blockType != null) {
-                // Adicionar ao pattern com peso baseado na chance
                 randomPattern.add(blockType.getDefaultState(), chance);
             }
         }
@@ -239,7 +292,7 @@ public class Mine {
     }
 
     /**
-     * Método de reset legado (fallback) caso FAWE não esteja disponível
+     * Método de reset legado (fallback)
      */
     private void resetLegacy() {
         Main.getInstance().getLogger().warning("Usando método de reset legado para mina " + id);
@@ -270,6 +323,34 @@ public class Mine {
         currentBlocks = totalBlocks;
         lastReset = System.currentTimeMillis();
     }
+
+    /**
+     * Teleporta jogadores para o topo da mina mantendo posição X/Z
+     */
+    private void teleportPlayersToTop() {
+        List<Player> players = getPlayersInMine();
+
+        if (players.isEmpty()) return;
+
+        int maxY = Math.max(pos1.getBlockY(), pos2.getBlockY());
+
+        for (Player player : players) {
+            Location currentLoc = player.getLocation();
+
+            Location topLoc = new Location(
+                    currentLoc.getWorld(),
+                    currentLoc.getX(),
+                    maxY + 1,
+                    currentLoc.getZ(),
+                    currentLoc.getYaw(),
+                    currentLoc.getPitch()
+            );
+
+            player.teleport(topLoc);
+            Main.getInstance().getLanguageManager().sendMessage(player, "mine.reset-teleport-top");
+        }
+    }
+
     /**
      * Cria uma lista ponderada de blocos baseada nas chances
      */
@@ -366,6 +447,7 @@ public class Mine {
             reset();
         }
     }
+
     /**
      * Obtém a porcentagem de blocos restantes
      */
@@ -388,6 +470,36 @@ public class Mine {
         return blocks.get(material);
     }
 
+    /**
+     * Verifica se o material é uma cabeça base64
+     */
+    public boolean isBase64Head() {
+        return materialData != null && materialData.length() > 50;
+    }
+
+    /**
+     * Obtém o material como Material enum (se não for base64)
+     */
+    public Material getMaterial() {
+        if (isBase64Head()) {
+            return Material.PLAYER_HEAD;
+        }
+
+        try {
+            return Material.valueOf(materialData.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            Main.getInstance().getLogger().warning("Material inválido para mina " + id + ": " + materialData);
+            return Material.DIAMOND_PICKAXE;
+        }
+    }
+
+    /**
+     * Obtém a textura base64 da cabeça (se aplicável)
+     */
+    public String getBase64Texture() {
+        return isBase64Head() ? materialData : null;
+    }
+
     // ============ UTILITÁRIOS DE LOCALIZAÇÃO ============
 
     private static Location loadLocation(YamlConfiguration config, String path) {
@@ -402,19 +514,17 @@ public class Mine {
 
         World world = Bukkit.getWorld(worldName);
 
-        // Se o mundo não foi encontrado, tenta carregar depois
         if (world == null) {
             Main.getInstance().getLogger().warning("Mundo '" + worldName + "' não encontrado para: " + path);
             Main.getInstance().getLogger().warning("A mina será carregada novamente quando o mundo estiver disponível.");
 
-            // Agenda retry após 5 segundos
             final String finalPath = path;
             Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
                 World retryWorld = Bukkit.getWorld(worldName);
                 if (retryWorld != null) {
                     Main.getInstance().getLogger().info("Mundo '" + worldName + "' carregado com sucesso para: " + finalPath);
                 }
-            }, 100L); // 5 segundos
+            }, 100L);
 
             return null;
         }
@@ -424,7 +534,6 @@ public class Mine {
 
     private void saveLocation(YamlConfiguration config, String path, Location loc) {
         if (loc == null) {
-            // Não remove a seção, apenas não sobrescreve
             return;
         }
 
@@ -453,6 +562,14 @@ public class Mine {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public String getMaterialData() {
+        return materialData;
+    }
+
+    public void setMaterialData(String materialData) {
+        this.materialData = materialData;
     }
 
     public Location getSpawn() {

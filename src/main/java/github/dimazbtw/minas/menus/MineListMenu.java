@@ -6,10 +6,12 @@ import github.dimazbtw.lib.inventories.ItemButton;
 import github.dimazbtw.minas.Main;
 import github.dimazbtw.minas.data.Mine;
 import github.dimazbtw.minas.utils.MapBuilder;
+import github.dimazbtw.minas.utils.SkullUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,8 +71,8 @@ public class MineListMenu {
         gui.show(player);
     }
 
+    // MineListMenu.java - Atualizado para usar material da mina
     private ItemButton createMineButton(Mine mine) {
-        Material material = mine.isConfigured() ? Material.DIAMOND_PICKAXE : Material.WOODEN_PICKAXE;
         String status = mine.isConfigured() ? "§a✓ Configurada" : "§c✗ Não configurada";
 
         List<String> lore = new ArrayList<>();
@@ -89,10 +91,21 @@ public class MineListMenu {
         lore.add("§e⬥ Clique Direito §8- §fTeleportar");
         lore.add("§e⬥ Shift + Clique §8- §fResetar");
 
-        ItemButton button = new ItemButton(material, mine.getDisplayName(), lore.toArray(new String[0]));
+        // Criar ItemStack com o material da mina
+        ItemStack item;
+
+        if (mine.isBase64Head()) {
+            item = SkullUtils.createSkull(mine.getBase64Texture());
+        } else {
+            item = new ItemStack(mine.getMaterial());
+        }
+
+        ItemButton button = new ItemButton(item);
+        button.setName(mine.getDisplayName());
+        button.setLore(lore);
 
         // Editar mina
-        button.addAction(ClickType.LEFT, e -> new MineEditMenu(plugin, player, mine).open()); // ✅ CORRIGIDO
+        button.addAction(ClickType.LEFT, e -> new MineEditMenu(plugin, player, mine).open());
 
         // Teleportar
         button.addAction(ClickType.RIGHT, e -> {
@@ -112,7 +125,7 @@ public class MineListMenu {
                 mine.reset();
                 plugin.getLanguageManager().sendMessage(player, "mine.reset-success",
                         MapBuilder.of("mine", mine.getDisplayName()));
-                open(); // Reabrir menu
+                open();
             }
         });
 
@@ -121,7 +134,7 @@ public class MineListMenu {
                 mine.reset();
                 plugin.getLanguageManager().sendMessage(player, "mine.reset-success",
                         MapBuilder.of("mine", mine.getDisplayName()));
-                open(); // Reabrir menu
+                open();
             }
         });
 

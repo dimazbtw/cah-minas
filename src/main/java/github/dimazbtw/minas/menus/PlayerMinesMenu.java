@@ -6,6 +6,7 @@ import github.dimazbtw.lib.inventories.ItemButton;
 import github.dimazbtw.minas.Main;
 import github.dimazbtw.minas.data.Mine;
 import github.dimazbtw.minas.utils.MapBuilder;
+import github.dimazbtw.minas.utils.SkullUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -62,9 +63,8 @@ public class PlayerMinesMenu {
         gui.show(player);
     }
 
+    // PlayerMinesMenu.java - Atualizado para usar material da mina
     private ItemButton createMineButton(Mine mine, boolean isBest) {
-        Material material = isBest ? Material.DIAMOND_PICKAXE : Material.IRON_PICKAXE;
-
         List<String> lore = new ArrayList<>();
 
         if (isBest) {
@@ -75,17 +75,25 @@ public class PlayerMinesMenu {
         lore.add("");
         lore.add("§eClique para teleportar!");
 
-        String displayName = isBest ? "§6§l" + mine.getDisplayName() : "§f" + mine.getDisplayName() + " §7[" +String.format("%.1f%%", mine.getPercentageRemaining()) + "]";
+        String displayName = isBest ? "§6§l" + mine.getDisplayName() : "§f" + mine.getDisplayName() + " §7[" + String.format("%.1f%%", mine.getPercentageRemaining()) + "]";
 
-        // Criar ItemStack com flags
-        org.bukkit.inventory.ItemStack item = new org.bukkit.inventory.ItemStack(material);
+        // Criar ItemStack com o material da mina
+        org.bukkit.inventory.ItemStack item;
+
+        if (mine.isBase64Head()) {
+            // Usar cabeça customizada
+            item = SkullUtils.createSkull(mine.getBase64Texture());
+        } else {
+            // Usar material normal
+            item = new org.bukkit.inventory.ItemStack(mine.getMaterial());
+        }
+
         org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
 
         if (meta != null) {
             meta.setDisplayName(displayName);
             meta.setLore(lore);
 
-            // Esconder todos os atributos
             meta.addItemFlags(
                     org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES,
                     org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS,

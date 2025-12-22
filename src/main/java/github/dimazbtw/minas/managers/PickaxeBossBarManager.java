@@ -1,3 +1,4 @@
+// PickaxeBossBarManager.java - Corrigido para esconder ao sair da mina
 package github.dimazbtw.minas.managers;
 
 import github.dimazbtw.minas.Main;
@@ -20,10 +21,9 @@ public class PickaxeBossBarManager {
     private final Map<UUID, BukkitTask> updateTasks;
     private final Map<UUID, BukkitTask> hideTasks;
 
-    // Configurações
     private boolean enabled;
-    private int updateInterval; // em ticks
-    private int hideDelay; // em segundos após parar de minerar
+    private int updateInterval;
+    private int hideDelay;
     private String format;
     private BarColor barColor;
     private BarStyle barStyle;
@@ -37,7 +37,6 @@ public class PickaxeBossBarManager {
     }
 
     private void loadConfig() {
-        // Carregar configurações do config.yml
         enabled = plugin.getConfig().getBoolean("pickaxe-bossbar.enabled", true);
         updateInterval = plugin.getConfig().getInt("pickaxe-bossbar.update-interval", 10);
         hideDelay = plugin.getConfig().getInt("pickaxe-bossbar.hide-delay", 3);
@@ -63,13 +62,11 @@ public class PickaxeBossBarManager {
     }
 
     public void reload() {
-        // Remover todas as bossbars ativas
         for (BossBar bossBar : activeBossBars.values()) {
             bossBar.removeAll();
         }
         activeBossBars.clear();
 
-        // Cancelar todas as tasks
         for (BukkitTask task : updateTasks.values()) {
             task.cancel();
         }
@@ -80,16 +77,20 @@ public class PickaxeBossBarManager {
         }
         hideTasks.clear();
 
-        // Recarregar configurações
         loadConfig();
     }
 
     public void showBossBar(Player player) {
         if (!enabled) return;
 
+        // Verificar se o jogador está em uma mina
+        if (!plugin.getSessionManager().hasSession(player)) {
+            removeBossBar(player);
+            return;
+        }
+
         UUID uuid = player.getUniqueId();
 
-        // Cancelar task de esconder se existir
         if (hideTasks.containsKey(uuid)) {
             hideTasks.get(uuid).cancel();
             hideTasks.remove(uuid);
@@ -101,8 +102,6 @@ public class PickaxeBossBarManager {
             bossBar = Bukkit.createBossBar("", barColor, barStyle);
             bossBar.addPlayer(player);
             activeBossBars.put(uuid, bossBar);
-
-            // Iniciar task de atualização
             startUpdateTask(player);
         }
 
@@ -115,16 +114,19 @@ public class PickaxeBossBarManager {
 
         UUID uuid = player.getUniqueId();
 
-        // Cancelar task de esconder anterior se existir
         if (hideTasks.containsKey(uuid)) {
             hideTasks.get(uuid).cancel();
         }
 
-        // Agendar para esconder após o delay
         BukkitTask hideTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            BossBar bossBar = activeBossBars.get(uuid);
-            if (bossBar != null) {
-                bossBar.setVisible(false);
+            // Verificar se ainda está na mina
+            if (!plugin.getSessionManager().hasSession(player)) {
+                removeBossBar(player);
+            } else {
+                BossBar bossBar = activeBossBars.get(uuid);
+                if (bossBar != null) {
+                    bossBar.setVisible(false);
+                }
             }
             hideTasks.remove(uuid);
         }, hideDelay * 20L);
@@ -135,7 +137,6 @@ public class PickaxeBossBarManager {
     public void removeBossBar(Player player) {
         UUID uuid = player.getUniqueId();
 
-        // Cancelar tasks
         if (updateTasks.containsKey(uuid)) {
             updateTasks.get(uuid).cancel();
             updateTasks.remove(uuid);
@@ -146,7 +147,6 @@ public class PickaxeBossBarManager {
             hideTasks.remove(uuid);
         }
 
-        // Remover bossbar
         BossBar bossBar = activeBossBars.remove(uuid);
         if (bossBar != null) {
             bossBar.removeAll();
@@ -156,14 +156,18 @@ public class PickaxeBossBarManager {
     private void startUpdateTask(Player player) {
         UUID uuid = player.getUniqueId();
 
-        // Cancelar task anterior se existir
         if (updateTasks.containsKey(uuid)) {
             updateTasks.get(uuid).cancel();
         }
 
-        // Criar nova task de atualização
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!player.isOnline()) {
+                removeBossBar(player);
+                return;
+            }
+
+            // Verificar se ainda está na mina
+            if (!plugin.getSessionManager().hasSession(player)) {
                 removeBossBar(player);
                 return;
             }
@@ -195,13 +199,10 @@ public class PickaxeBossBarManager {
         int exp = pickaxeData.getExp();
         int expMax = pickaxeData.getExpForNextLevel();
 
-        // Calcular progresso (0.0 a 1.0)
-        double progress = expMax > 0 ? Math.min(1.0, (double) exp / expMax) : 1.0;
-
-        // Calcular percentagem
+        // Usar o novo método que retorna valor entre 0.0 e 1.0
+        double progress = pickaxeData.getProgressToNextLevel();
         int percentage = (int) (progress * 100);
 
-        // Formatar título
         String title = format
                 .replace("{level}", String.valueOf(level))
                 .replace("{exp}", formatNumber(exp))
@@ -211,7 +212,6 @@ public class PickaxeBossBarManager {
         bossBar.setTitle(title);
         bossBar.setProgress(progress);
 
-        // Mudar cor baseado no progresso
         updateBossBarColor(bossBar, progress);
     }
 
@@ -251,7 +251,6 @@ public class PickaxeBossBarManager {
     }
 
     public void shutdown() {
-        // Cancelar todas as tasks
         for (BukkitTask task : updateTasks.values()) {
             task.cancel();
         }
@@ -262,7 +261,6 @@ public class PickaxeBossBarManager {
         }
         hideTasks.clear();
 
-        // Remover todas as bossbars
         for (BossBar bossBar : activeBossBars.values()) {
             bossBar.removeAll();
         }

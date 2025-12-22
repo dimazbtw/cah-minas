@@ -1,25 +1,22 @@
+// PickaxeData.java - Sem limite de nível
 package github.dimazbtw.minas.data;
 
 import java.util.UUID;
 
-/**
- * Representa os dados da picareta de um jogador
- */
 public class PickaxeData {
 
     private final UUID playerUUID;
     private int blocksMined;
     private int level;
     private int exp;
-    private int efficiency;   // Aumenta velocidade de mineração
-    private int fortune;      // Multiplica rewards (coins/exp)
-    private int explosion;    // Chance de explosão 7x7
-    private int multiplier;   // Multiplica XP do bloco para evoluir encantamentos
-    private int experienced;  // Jogador recebe mais exp para o nível da picareta
-    private int destroyer;    // Chance de quebrar uma camada da mina
-    private int skinOrder;    // Ordem da skin ativada (0 = default)
+    private int efficiency;
+    private int fortune;
+    private int explosion;
+    private int multiplier;
+    private int experienced;
+    private int destroyer;
+    private int skinOrder;
 
-    // Configurações de níveis máximos
     public static final int MAX_EFFICIENCY = 1000;
     public static final int MAX_FORTUNE = 1000;
     public static final int MAX_EXPLOSION = 1000;
@@ -57,92 +54,57 @@ public class PickaxeData {
         this.skinOrder = skinOrder;
     }
 
-    /**
-     * Calcula o multiplicador de fortuna
-     */
     public double getFortuneMultiplier() {
         return 1.0 + (fortune * 0.5);
     }
 
-    /**
-     * Calcula a chance de explosão 7x7 (0-100%)
-     */
     public double getExplosionChance() {
         return explosion * 0.1;
     }
 
-    /**
-     * Calcula o multiplicador de XP do bloco para evoluir encantamentos
-     */
     public double getMultiplierBonus() {
         return 1.0 + (multiplier * 0.01);
     }
 
-    /**
-     * Calcula o bónus de EXP para o nível da picareta
-     */
     public double getExperiencedBonus() {
         return 1.0 + (experienced * 0.02);
     }
 
-    /**
-     * Calcula a chance de quebrar uma camada da mina (0-100%)
-     */
     public double getDestroyerChance() {
         return destroyer * 0.1;
     }
 
-    /**
-     * Calcula o custo em XP para melhorar eficiência
-     */
     public int getEfficiencyUpgradeCost() {
         return (efficiency + 1) * 100;
     }
 
-    /**
-     * Calcula o custo em XP para melhorar fortuna
-     */
     public int getFortuneUpgradeCost() {
         return (fortune + 1) * 150;
     }
 
-    /**
-     * Calcula o custo em XP para melhorar explosão
-     */
     public int getExplosionUpgradeCost() {
         return (explosion + 1) * 300;
     }
 
-    /**
-     * Verifica se pode melhorar eficiência
-     */
     public boolean canUpgradeEfficiency() {
         return efficiency < MAX_EFFICIENCY;
     }
 
-    /**
-     * Verifica se pode melhorar fortuna
-     */
     public boolean canUpgradeFortune() {
         return fortune < MAX_FORTUNE;
     }
 
-    /**
-     * Verifica se pode melhorar explosão
-     */
     public boolean canUpgradeExplosion() {
         return explosion < MAX_EXPLOSION;
     }
 
-    /**
-     * Incrementa blocos minerados
-     */
     public void incrementBlocksMined(int amount) {
         this.blocksMined += amount;
     }
 
     /**
      * Adiciona EXP à picareta e retorna o nível anterior (para verificar level up)
+     * SEM LIMITE DE NÍVEL
      */
     public int addExp(int amount) {
         int oldLevel = this.level;
@@ -152,11 +114,13 @@ public class PickaxeData {
     }
 
     /**
-     * Verifica e processa level up
+     * Verifica e processa level up - SEM LIMITE
      */
     private void checkLevelUp() {
         int expNeeded = getExpForNextLevel();
-        while (exp >= expNeeded && level < 100) {
+
+        // Loop infinito até não ter mais EXP suficiente
+        while (exp >= expNeeded) {
             exp -= expNeeded;
             level++;
             expNeeded = getExpForNextLevel();
@@ -165,9 +129,29 @@ public class PickaxeData {
 
     /**
      * Calcula EXP necessário para o próximo nível
+     * Fórmula escalonada para evitar números muito altos
      */
     public int getExpForNextLevel() {
-        return level * 100;
+        if (level <= 100) {
+            return level * 100;
+        } else if (level <= 500) {
+            return 10000 + ((level - 100) * 150);
+        } else if (level <= 1000) {
+            return 70000 + ((level - 500) * 200);
+        } else {
+            // Níveis acima de 1000 têm crescimento mais lento
+            return 170000 + ((level - 1000) * 250);
+        }
+    }
+
+    /**
+     * Calcula a porcentagem de progresso para o próximo nível
+     * Retorna valor entre 0.0 e 1.0
+     */
+    public double getProgressToNextLevel() {
+        int expNeeded = getExpForNextLevel();
+        if (expNeeded == 0) return 1.0;
+        return Math.min(1.0, (double) exp / expNeeded);
     }
 
     public void reset() {

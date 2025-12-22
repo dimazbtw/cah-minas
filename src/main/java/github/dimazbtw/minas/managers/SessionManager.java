@@ -1,3 +1,4 @@
+// SessionManager.java - Corrigido para remover bossbar ao sair
 package github.dimazbtw.minas.managers;
 
 import github.dimazbtw.minas.Main;
@@ -9,9 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Gerencia as sessões dos jogadores nas minas
- */
 public class SessionManager {
 
     private final Main plugin;
@@ -22,9 +20,6 @@ public class SessionManager {
         this.sessions = new HashMap<>();
     }
 
-    /**
-     * Cria ou atualiza a sessão de um jogador
-     */
     public void createSession(Player player, Mine mine) {
         PlayerSession session = sessions.get(player.getUniqueId());
 
@@ -34,27 +29,25 @@ public class SessionManager {
             session.setCurrentMine(mine);
         }
 
-        // Dar picareta de mina ao jogador
         plugin.getPickaxeManager().givePickaxe(player);
 
-        // Mostrar scoreboard
         if (plugin.getScoreboardManager() != null) {
             plugin.getScoreboardManager().showScoreboard(player, mine);
         }
     }
 
-    /**
-     * Remove a sessão de um jogador
-     */
     public void removeSession(Player player) {
         sessions.remove(player.getUniqueId());
 
-        // Remover picareta de mina
         plugin.getPickaxeManager().removePickaxes(player);
 
-        // Remover scoreboard
         if (plugin.getScoreboardManager() != null) {
             plugin.getScoreboardManager().removeScoreboard(player);
+        }
+
+        // Remover bossbar ao sair da mina
+        if (plugin.getPickaxeBossBarManager() != null) {
+            plugin.getPickaxeBossBarManager().removeBossBar(player);
         }
     }
 
@@ -63,39 +56,32 @@ public class SessionManager {
             Player player = plugin.getServer().getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 plugin.getPickaxeManager().removePickaxes(player);
+
                 if (plugin.getScoreboardManager() != null) {
                     plugin.getScoreboardManager().removeScoreboard(player);
+                }
+
+                if (plugin.getPickaxeBossBarManager() != null) {
+                    plugin.getPickaxeBossBarManager().removeBossBar(player);
                 }
             }
         }
         sessions.clear();
     }
 
-    /**
-     * Obtém a sessão de um jogador
-     */
     public PlayerSession getSession(Player player) {
         return sessions.get(player.getUniqueId());
     }
 
-    /**
-     * Verifica se o jogador tem uma sessão ativa
-     */
     public boolean hasSession(Player player) {
         return sessions.containsKey(player.getUniqueId());
     }
 
-    /**
-     * Obtém a mina atual do jogador
-     */
     public Mine getCurrentMine(Player player) {
         PlayerSession session = sessions.get(player.getUniqueId());
         return session != null ? session.getCurrentMine() : null;
     }
 
-    /**
-     * Incrementa o contador de blocos minerados
-     */
     public void incrementBlocksMined(Player player, int amount) {
         PlayerSession session = sessions.get(player.getUniqueId());
         if (session != null) {
@@ -105,16 +91,10 @@ public class SessionManager {
         }
     }
 
-    /**
-     * Limpa todas as sessões
-     */
     public void clearAll() {
         sessions.clear();
     }
 
-    /**
-     * Obtém todas as sessões ativas
-     */
     public Map<UUID, PlayerSession> getSessions() {
         return sessions;
     }
